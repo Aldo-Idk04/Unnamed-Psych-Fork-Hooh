@@ -1,0 +1,47 @@
+{
+    "hide_version": true,
+    "moving_camera": false,
+    "sprites": {
+        "background": {
+            "path": "assets/background.png",
+            "position": [0, 0],
+            "scale": [1, 1]
+        },
+        "magenta": {
+            "path": "assets/magenta.png",
+            "position": [0, 0],
+            "scale": [1, 1]
+        },
+        "story_mode": {
+            "path": "assets/story_mode.png",
+            "position": [100, 50],
+            "scale": [1, 1]
+        },
+        "freeplay": {
+            "path": "assets/title.png",
+            "position": [100, 50],
+            "scale": [1, 1]
+        },
+        "mods": {
+            "path": "assets/exit.png",
+            "position": [100, 350],
+            "scale": [1, 1]
+        },
+        "credits": {
+            "path": "assets/credits.png",
+            "position": [100, 400],
+            "scale": [1, 1]
+        },
+        "options": {
+            "path": "assets/options.png",
+            "position": [100, 200],
+            "scale": [1, 1]
+        },
+
+        "achievements": {
+            "path": "assets/achievements.png",
+            "position": [100, 500],
+            "scale": [1, 1]
+        }
+    }
+}
