@@ -1980,6 +1980,8 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		if(secNum == null) secNum = curSec;
 		var section = PlayState.SONG.notes[secNum];
 
+ 		var isNewNote:Bool = (note.length <= 5 || note[5] == null || note[1] == note[5]);
+
 		if (note.length > 5 && note[5] != null)
 		{
 			note[1] = note[5];
@@ -1994,7 +1996,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		var col:Int = Std.int(note[1]);
 		var playerIndex:Int = Std.int(col / GRID_COLUMNS_PER_PLAYER); // 0 = J1, 1 = J2, 2 = J3, 3 = J4
 		var gottaHitNote:Bool;
-		if (originalFormat == null || originalFormat == 'psych_v1_convert')
+		if (!isNewNote && (originalFormat == null || originalFormat == 'psych_v1_convert'))
 		{
 			if (section.mustHitSection)
 			{
@@ -2004,15 +2006,12 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 			{
 				note[1] = col + 4;
 			}
-			gottaHitNote = (note[1] < GRID_COLUMNS_PER_PLAYER);
+			gottaHitNote = (col < GRID_COLUMNS_PER_PLAYER);
 		}
  		else
 		{
 			gottaHitNote = (playerIndex % 2 == 0);
 		}
-		//var gottaHitNote:Bool = (playerIndex % 2 == 0);
-		//var gottaHitNote:Bool = (playerIndex == 0 || playerIndex == 2);
-
 		//var gottaHitNote:Bool = (note[1] < GRID_COLUMNS_PER_PLAYER);
 
 		var swagNote:MetaNote = new MetaNote(daStrumTime, daNoteData, note);

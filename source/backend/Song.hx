@@ -132,8 +132,6 @@ class Song
 
 				if (isOldChart)
 				{
-	            	/*gottaHitNote = (col < 4) ? section.mustHitSection : !section.mustHitSection;
-           			note[1] = (col % 4) + (gottaHitNote ? 0 : 4);*/
 					if (section.mustHitSection)
 						note[1] = col;
 					else
@@ -145,8 +143,6 @@ class Song
 					gottaHitNote = (playerIndex % 2 == 0);
 				}
 
-				//var gottaHitNote:Bool = (playerIndex == 0 || playerIndex == 2);
-				//note[1] = (col % 4) + (gottaHitNote ? 0 : 8);
 				/*var gottaHitNote:Bool = (note[1] < 4) ? section.mustHitSection : !section.mustHitSection;
 				note[1] = (note[1] % 4) + (gottaHitNote ? 0 : 4);*/
 

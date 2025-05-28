@@ -524,7 +524,7 @@ class Note extends FlxSprite
 		{
 			if (!StringTools.endsWith(animation.name, 'end'))
 			{
-				scale.y = scaleSus * (SUSTAIN_SIZE / (frameHeight * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1))) + 0.06125;
+				scale.y = scaleSus * (SUSTAIN_SIZE / (frameHeight * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1))) + 0.065;
 				updateHitbox();
 			}
 			else offsetY = 0.01375;
