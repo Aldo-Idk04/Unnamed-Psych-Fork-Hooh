@@ -217,6 +217,8 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 	var waveformEnabled:Bool = false;
 	var waveformTarget:WaveformTarget = INST;
 
+	var originalFormat:String = null;
+
 	override function create()
 	{
 		if(Difficulty.list.length < 1) Difficulty.resetList();
@@ -1794,6 +1796,16 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 	var cachedSectionBPMs:Array<Float>;
 	function loadChart(song:SwagSong)
 	{
+		if(Reflect.hasField(song, 'song'))
+		{
+			var subSong:SwagSong = Reflect.field(song, 'song');
+			if(subSong != null && Type.typeof(subSong) == TObject)
+				song = subSong;
+		}
+		originalFormat = song.format;
+		//trace('SONG FORMAT' + song.format);
+		Song.convert(song, song.format);
+		
 		PlayState.SONG = song;
 		StageData.loadDirectory(PlayState.SONG);
 		Conductor.bpm = PlayState.SONG.bpm;
@@ -1976,12 +1988,30 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		{
 			note[5] = note[1];
 		}
-
+		
 		var daStrumTime:Float = note[0];
 		var daNoteData:Int = Std.int(note[1] % GRID_COLUMNS_PER_PLAYER);
 		var col:Int = Std.int(note[1]);
 		var playerIndex:Int = Std.int(col / GRID_COLUMNS_PER_PLAYER); // 0 = J1, 1 = J2, 2 = J3, 3 = J4
-		var gottaHitNote:Bool = (playerIndex == 0 || playerIndex == 2);
+		var gottaHitNote:Bool;
+		if (originalFormat == null || originalFormat == 'psych_v1_convert')
+		{
+			if (section.mustHitSection)
+			{
+				note[1] = col;
+			}
+			else
+			{
+				note[1] = col + 4;
+			}
+			gottaHitNote = (note[1] < GRID_COLUMNS_PER_PLAYER);
+		}
+ 		else
+		{
+			gottaHitNote = (playerIndex % 2 == 0);
+		}
+		//var gottaHitNote:Bool = (playerIndex % 2 == 0);
+		//var gottaHitNote:Bool = (playerIndex == 0 || playerIndex == 2);
 
 		//var gottaHitNote:Bool = (note[1] < GRID_COLUMNS_PER_PLAYER);
 
@@ -4156,7 +4186,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 					var fmt:String = loadedChart.format;
 					if(fmt == null || fmt.length < 1)
 						fmt = loadedChart.format = 'unknown';
-
+					
 					if(!fmt.startsWith('psych_v1'))
 					{
 						loadedChart.format = 'psych_v1_convert';

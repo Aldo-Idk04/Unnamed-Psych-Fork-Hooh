@@ -27,7 +27,8 @@ class MetaNote extends Note
 		this.songData[1] = v;
 		this.noteData = v % ChartingState.GRID_COLUMNS_PER_PLAYER;
 		var playerIndex = Std.int(v / ChartingState.GRID_COLUMNS_PER_PLAYER); // 0 = J1, 1 = J2, 2 = J3, 3 = J4
-		this.mustPress = (playerIndex == 0 || playerIndex == 2);
+		this.mustPress = (playerIndex % 2 == 0);
+		//this.mustPress = (playerIndex == 0 || playerIndex == 2);
 		//this.mustPress = (v < ChartingState.GRID_COLUMNS_PER_PLAYER);
 		
 		if(!PlayState.isPixelStage)

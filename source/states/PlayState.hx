@@ -1448,7 +1448,8 @@ class PlayState extends MusicBeatState
 				//var gottaHitNote:Bool = (songNotes[1] < totalColumns);
 				var col:Int = Std.int(songNotes[1]);
 				var playerIndex:Int = Std.int(col / 4); // 0 = J1, 1 = J2, 2 = J3, 3 = J4
-				var gottaHitNote:Bool = (playerIndex == 0 || playerIndex == 2);
+				var gottaHitNote:Bool = (playerIndex % 2 == 0);
+				//var gottaHitNote:Bool = (playerIndex == 0 || playerIndex == 2);
 				if (i != 0) {
 					// CLEAR ANY POSSIBLE GHOST NOTES
 					for (evilNote in unspawnNotes) {

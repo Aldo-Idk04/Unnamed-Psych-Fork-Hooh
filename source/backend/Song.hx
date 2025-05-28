@@ -69,7 +69,7 @@ class Song
 	public var jackalVersion:String = 'bf';
 	public var format:String = 'psych_v1';
 
-	public static function convert(songJson:Dynamic) // Convert old charts to psych_v1 format
+	public static function convert(songJson:Dynamic, ?oldFormat:String = 'psych_v1') // Convert old charts to psych_v1 format
 	{
 		if(songJson.gfVersion == null)
 		{
@@ -104,27 +104,48 @@ class Song
 		var sectionsData:Array<SwagSection> = songJson.notes;
 		if(sectionsData == null) return;
 
+		var isOldChart:Bool = (oldFormat == null || oldFormat == 'unknown');
+
 		for (section in sectionsData)
 		{
+			
+
 			var beats:Null<Float> = cast section.sectionBeats;
 			if (beats == null || Math.isNaN(beats))
 			{
 				section.sectionBeats = 4;
 				if(Reflect.hasField(section, 'lengthInSteps')) Reflect.deleteField(section, 'lengthInSteps');
 			}
-
 			for (note in section.sectionNotes)
 			{
+
 			    if (note.length <= 5 || note[5] == null)
             		note[5] = note[1];
 
 				var col:Int = Std.int(note[1]);
 				if (col < 0) col = 0;
 				if (col > 15) col = 15;
-				note[1] = col;
+				//note[1] = col;
 
 				var playerIndex:Int = Std.int(col / 4);
-				var gottaHitNote:Bool = (playerIndex == 0 || playerIndex == 2);
+				var gottaHitNote:Bool;
+
+				if (isOldChart)
+				{
+	            	/*gottaHitNote = (col < 4) ? section.mustHitSection : !section.mustHitSection;
+           			note[1] = (col % 4) + (gottaHitNote ? 0 : 4);*/
+					if (section.mustHitSection)
+						note[1] = col;
+					else
+						note[1] = col + 4;
+				}
+				else
+				{
+					note[1] = col;
+					gottaHitNote = (playerIndex % 2 == 0);
+				}
+
+				//var gottaHitNote:Bool = (playerIndex == 0 || playerIndex == 2);
 				//note[1] = (col % 4) + (gottaHitNote ? 0 : 8);
 				/*var gottaHitNote:Bool = (note[1] < 4) ? section.mustHitSection : !section.mustHitSection;
 				note[1] = (note[1] % 4) + (gottaHitNote ? 0 : 4);*/
@@ -185,7 +206,7 @@ class Song
 		{
 			var fmt:String = songJson.format;
 			if(fmt == null) fmt = songJson.format = 'unknown';
-
+			var oldFormat:String = songJson.format;
 			switch(convertTo)
 			{
 				case 'psych_v1':
@@ -193,7 +214,7 @@ class Song
 					{
 						trace('converting chart $nameForError with format $fmt to psych_v1 format...');
 						songJson.format = 'psych_v1_convert';
-						convert(songJson);
+						convert(songJson, oldFormat);
 					}
 			}
 		}

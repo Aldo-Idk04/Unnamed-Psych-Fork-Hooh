@@ -513,6 +513,23 @@ class Note extends FlxSprite
 			if (alpha > 0.3)
 				alpha = 0.3;
 		}
+
+		var scaleSus:Float = (((120 / PlayState.SONG.bpm) * (PlayState.instance.songSpeed * 1.278414)) * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1)) + (0.000014 * PlayState.instance.songSpeed);
+		updateScale(scaleSus);
+	}
+
+	function updateScale(scaleSus:Float)
+	{
+		if (isSustainNote && scale.y != scaleSus * (SUSTAIN_SIZE / (frameHeight * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1))))
+		{
+			if (!StringTools.endsWith(animation.name, 'end'))
+			{
+				scale.y = scaleSus * (SUSTAIN_SIZE / (frameHeight * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1))) + 0.06125;
+				updateHitbox();
+			}
+			else offsetY = 0.01375;
+			antialiasing = false;
+		}
 	}
 
 	override public function destroy()
