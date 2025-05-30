@@ -1998,15 +1998,8 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		var gottaHitNote:Bool;
 		if (!isNewNote && (originalFormat == null || originalFormat == 'psych_v1_convert'))
 		{
-			if (section.mustHitSection)
-			{
-				note[1] = col;
-			}
-			else
-			{
-				note[1] = col + 4;
-			}
-			gottaHitNote = (col < GRID_COLUMNS_PER_PLAYER);
+			gottaHitNote = (note[1] < 4) ? section.mustHitSection : !section.mustHitSection;
+			note[1] = (note[1] % 4) + (gottaHitNote ? 0 : 4);
 		}
  		else
 		{
@@ -2134,7 +2127,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 			var changeBpmSec:Bool = lastSection != null ? lastSection.changeBPM : false;
 			var altAnimSec:Bool = lastSection != null ? lastSection.altAnim : false;
 			var gfSec:Bool = lastSection != null ? lastSection.gfSection : false;
-			var secTurn:Bool = lastSection != null ? lastSection.mustHitSection : false;
+			var secTurn:Bool = lastSection != null ? lastSection.secsSection : false;
 
 			while(!reachedLimit)
 			{

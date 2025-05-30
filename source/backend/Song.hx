@@ -132,10 +132,8 @@ class Song
 
 				if (isOldChart)
 				{
-					if (section.mustHitSection)
-						note[1] = col;
-					else
-						note[1] = col + 4;
+					gottaHitNote = (note[1] < 4) ? section.mustHitSection : !section.mustHitSection;
+					note[1] = (note[1] % 4) + (gottaHitNote ? 0 : 4);
 				}
 				else
 				{

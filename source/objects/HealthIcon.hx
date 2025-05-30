@@ -69,7 +69,7 @@ class HealthIcon extends FlxSprite
 				#if MODS_ALLOWED
 					jsonPath = File.getContent(Paths.modFolders('images/' + name + '.json'));
 				#else
-					jsonPath = File.getContent(Paths.getSharedPath('images/' + name + '.json', IMAGE));
+					jsonPath = File.getContent(Paths.getSharedPath('images/' + name + '.json'));
 				#end
 			}
 

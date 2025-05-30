@@ -3147,6 +3147,11 @@ class PlayState extends MusicBeatState
 		// play character anims
 		var char:Character = boyfriend;
 		if((note != null && note.secNote)) char = ally;	
+		if (ally == null && note.secNote)
+		{
+			note.secNote = false;
+			note.gfNote = true;
+		}
 		if((note != null && note.gfNote) || (SONG.notes[curSection] != null && SONG.notes[curSection].gfSection)) char = gf;
 
 		if(char != null && (note == null || !note.noMissAnimation) && char.hasMissAnimations)
@@ -3192,8 +3197,14 @@ class PlayState extends MusicBeatState
 		{
 			var char:Character = dad;
 			var animToPlay:String = singAnimations[Std.int(Math.abs(Math.min(singAnimations.length-1, note.noteData)))] + note.animSuffix;
-			if(note.gfNote) char = gf;
 			if (note.secNote) char = jackal;
+			if (jackal == null && note.secNote)
+			{
+				note.secNote = false;
+				note.gfNote = true;
+			}
+			if(note.gfNote) char = gf;
+
 
 
 			if(char != null)
@@ -3262,6 +3273,12 @@ class PlayState extends MusicBeatState
 				var animCheck:String = 'hey';
 				if (note.secNote)
 					char = ally;
+
+				if (ally == null && note.secNote)
+				{
+					note.secNote = false;
+					note.gfNote = true;
+				}
 
 				if(note.gfNote)
 				{
@@ -3351,6 +3368,12 @@ class PlayState extends MusicBeatState
 		var noteData:Int = note.noteData;
 		var char:Character = mustPress ? boyfriend : dad;
 		if (note.secNote) char = mustPress ? ally : jackal;
+		if (char == null && note.secNote) 
+		{
+			note.secNote = false;
+			note.gfNote = true;
+			char = gf;
+		}
 		if (note.gfNote) char = gf;
 		if (char == null) return;
 		var animToPlay:String = singAnimations[Std.int(Math.abs(Math.min(singAnimations.length-1, note.noteData)))] + note.animSuffix;
