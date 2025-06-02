@@ -49,6 +49,8 @@ class FreeplayState extends MusicBeatState
 
 	var player:MusicPlayer;
 
+	var bpmChanges:Array<{time:Float, bpm:Float}> = [];
+
 	override function create()
 	{
 		//Paths.clearStoredMemory();
@@ -124,7 +126,6 @@ class FreeplayState extends MusicBeatState
 			var icon:HealthIcon = new HealthIcon(songs[i].songCharacter);
 			icon.sprTracker = songText;
 
-			
 			// too laggy with a lot of songs, so i had to recode the logic for it
 			songText.visible = songText.active = songText.isMenuItem = false;
 			icon.visible = icon.active = false;
@@ -294,6 +295,7 @@ class FreeplayState extends MusicBeatState
 				}
 			}
 
+
 			if (controls.UI_LEFT_P)
 			{
 				changeDiff(-1);
@@ -304,6 +306,11 @@ class FreeplayState extends MusicBeatState
 				changeDiff(1);
 				_updateSongLastDifficulty();
 			}
+		}
+		else
+		{
+			if (FlxG.sound.music != null && FlxG.sound.music.playing)
+				updateBPMDuringPlayback(elapsed);
 		}
 
 		if (controls.BACK)
@@ -316,6 +323,7 @@ class FreeplayState extends MusicBeatState
 				instPlaying = -1;
 
 				Conductor.bpm = prevBpm;
+				lastAppliedBPMIndex = 0;
 
 				player.playingMusic = false;
 				player.switchPlayMusic();
@@ -343,6 +351,10 @@ class FreeplayState extends MusicBeatState
 				destroyFreeplayVocals();
 				FlxG.sound.music.volume = 0;
 				Mods.currentModDirectory = songs[curSelected].folder;
+
+				lastAppliedBPMIndex = 0;
+		        bpmChanges = detectBPMChanges(songs[curSelected].songName, curDifficulty);
+
 				var realSongToLoad:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
 				Song.loadFromJson(realSongToLoad, songs[curSelected].songName.toLowerCase());
 
@@ -712,6 +724,88 @@ class FreeplayState extends MusicBeatState
 			icon.visible = icon.active = true;
 			_lastVisibles.push(i);
 		}
+	}
+
+	var lastAppliedBPMIndex:Int = 0;
+
+	function updateBPMDuringPlayback(elapsed:Float)
+	{
+		if (player.playingMusic && FlxG.sound.music != null && bpmChanges.length > 1)
+		{
+			var currentTime = FlxG.sound.music.time;
+			
+			var targetIndex:Int = 0;
+			var targetBPM:Float = bpmChanges[0].bpm;
+			
+			for (i in 0...bpmChanges.length)
+			{
+				if (currentTime >= bpmChanges[i].time)
+				{
+					targetIndex = i;
+					targetBPM = bpmChanges[i].bpm;
+				}
+				else
+				{
+					break;
+				}
+			}
+			
+			if (targetIndex != lastAppliedBPMIndex)
+			{
+				trace('BPM changed from ${Conductor.bpm} to $targetBPM at time ${currentTime}ms (index: $targetIndex)');
+				Conductor.bpm = targetBPM;
+				lastAppliedBPMIndex = targetIndex;
+			}
+		}
+	}
+
+	function detectBPMChanges(songName:String, difficulty:Int):Array<{time:Float, bpm:Float}>
+	{
+		var changes:Array<{time:Float, bpm:Float}> = [];
+		
+		try 
+		{
+			var songLowercase:String = Paths.formatToSongPath(songName);
+			var realSongToLoad:String = Highscore.formatSong(songLowercase, difficulty);
+			
+			Song.loadFromJson(realSongToLoad, songLowercase);
+			var songData = PlayState.SONG;
+			
+			var currentTime:Float = 0;
+			var currentBPM:Float = songData.bpm;
+			var currentBeatsPerSection:Float = 4;
+			
+			changes.push({time: 0, bpm: currentBPM});
+			trace('Initial BPM: $currentBPM');
+			
+			for (i in 0...songData.notes.length)
+			{
+				var section = songData.notes[i];
+
+				if (Reflect.hasField(section, 'changeBPM') && section.changeBPM == true && 
+					Reflect.hasField(section, 'bpm') && section.bpm != currentBPM)
+				{
+					changes.push({time: currentTime, bpm: section.bpm});
+					currentBPM = section.bpm;
+				}
+				
+				var beatsInSection:Float = currentBeatsPerSection;
+				if (Reflect.hasField(section, 'sectionBeats'))
+				{
+					beatsInSection = section.sectionBeats;
+				}
+				
+				var sectionDuration:Float = (beatsInSection * 60000) / currentBPM;
+				currentTime += sectionDuration;
+			}
+			
+		}
+		catch (e:Dynamic)
+		{
+			trace('Error detecting BPM changes: ' + e);
+		}
+		
+		return changes;
 	}
 
 	override function destroy():Void

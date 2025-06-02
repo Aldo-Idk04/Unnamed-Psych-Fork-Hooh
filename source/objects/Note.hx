@@ -311,6 +311,10 @@ class Note extends FlxSprite
 
 			offsetX -= width / 2;
 
+
+			if (noteData == 1 || noteData == 2)
+				offsetX += noteData == 1 ? -2.05 : 0.25;
+
 			if (PlayState.isPixelStage)
 				offsetX += 30;
 
@@ -514,23 +518,25 @@ class Note extends FlxSprite
 				alpha = 0.3;
 		}
 
-		var scaleSus:Float = (((120 / PlayState.SONG.bpm) * (PlayState.instance.songSpeed * 1.278414)) * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1)) + (0.000014 * PlayState.instance.songSpeed);
-		updateScale(scaleSus);
+		/*var scaleSus:Float = (((120 / PlayState.SONG.bpm) * (PlayState.instance.songSpeed * 1.278414)) * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1)) + (0.000014 * PlayState.instance.songSpeed);
+		updateScale(scaleSus);*/
 	}
 
-	function updateScale(scaleSus:Float)
+	/*function updateScale(scaleSus:Float)
 	{
-		if (isSustainNote && scale.y != scaleSus * (SUSTAIN_SIZE / (frameHeight * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1))))
+		if (isSustainNote && scale.y != scaleSus * (SUSTAIN_SIZE / (frameHeight * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1))) + 0.01985)
 		{
 			if (!StringTools.endsWith(animation.name, 'end'))
 			{
-				scale.y = scaleSus * (SUSTAIN_SIZE / (frameHeight * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1))) + 0.065;
+				scale.y = scaleSus * (SUSTAIN_SIZE / (frameHeight * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1)) + 0.01985);
+				//y += 15;
+				//offsetY -= 10;
 				updateHitbox();
 			}
 			else offsetY = 0.01375;
 			antialiasing = false;
 		}
-	}
+	}*/
 
 	override public function destroy()
 	{
