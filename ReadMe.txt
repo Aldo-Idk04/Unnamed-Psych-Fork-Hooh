@@ -35,8 +35,17 @@ Added secondaries Notes
 (Note)
 
 Added new value for the stages called "need_secondaries" (Bool)
+
 Added new checkmarks for Ally and Jackal (Charting State)
 
 Added lua var "secsSection" (FunkinLua, PlayState)
 
-Added new characters strums (MetaNote, Song, PlayState, ChartingState)
+Added new characters notes (MetaNote, Song, PlayState, ChartingState)
+
+0.3
+
+Added secondaries cameras offsets
+
+Added camera moving to the actual sec characters
+
+Added support for sec characters for "cameraSetTarget" lua function

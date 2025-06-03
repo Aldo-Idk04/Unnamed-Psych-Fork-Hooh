@@ -820,6 +820,8 @@ class FunkinLua {
 					game.moveCameraToGirlfriend();
 				case 'dad', 'opponent':
 					game.moveCamera(true);
+				case 'ally', 'jackal':
+					game.moveCameraToSecondary(target == 'jackal');
 				default:
 					game.moveCamera(false);
 			}

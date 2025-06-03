@@ -244,6 +244,8 @@ class PlayState extends MusicBeatState
 	public var boyfriendCameraOffset:Array<Float> = null;
 	public var opponentCameraOffset:Array<Float> = null;
 	public var girlfriendCameraOffset:Array<Float> = null;
+	public var allyCameraOffset:Array<Float> = null;
+	public var jackalCameraOffset:Array<Float> = null;
 
 	#if DISCORD_ALLOWED
 	// Discord RPC variables
@@ -366,15 +368,17 @@ class PlayState extends MusicBeatState
 		GF_Y = stageData.girlfriend[1];
 		DAD_X = stageData.opponent[0];
 		DAD_Y = stageData.opponent[1];
-		if (stageData.ally != null)
+
+		if (stageData?.ally != null)
 		{
-			ALLY_X = stageData.ally[0];
-			ALLY_Y = stageData.ally[1];
+			ALLY_X = stageData?.ally[0] ?? 800.0;
+			ALLY_Y = stageData?.ally[1] ?? 70.0;
 		}
-		if (stageData.jackal != null)
+
+		if (stageData?.jackal != null)
 		{
-			JACKAL_X = stageData.jackal[0];
-			JACKAL_Y = stageData.jackal[1];
+			JACKAL_X = stageData?.jackal[0] ?? 70.0;
+			JACKAL_Y = stageData?.jackal[1] ?? 70.0;
 		}
 
 		if(stageData.camera_speed != null)
@@ -391,6 +395,14 @@ class PlayState extends MusicBeatState
 		girlfriendCameraOffset = stageData.camera_girlfriend;
 		if(girlfriendCameraOffset == null)
 			girlfriendCameraOffset = [0, 0];
+
+		allyCameraOffset = stageData.camera_ally;
+		if(allyCameraOffset == null)
+			allyCameraOffset = [0, 0];
+
+		jackalCameraOffset = stageData.camera_jackal;
+		if(jackalCameraOffset == null)
+			jackalCameraOffset = [0, 0];
 
 		boyfriendGroup = new FlxSpriteGroup(BF_X, BF_Y);
 		dadGroup = new FlxSpriteGroup(DAD_X, DAD_Y);
@@ -2504,11 +2516,21 @@ class PlayState extends MusicBeatState
 		}
 
 		var isDad:Bool = (SONG.notes[sec].mustHitSection != true);
-		moveCamera(isDad);
-		if (isDad)
+		if (SONG.notes[sec].secsSection)
+		{
+			moveCameraToSecondary(isDad);
+			callOnScripts('onMoveCamera', [isDad ? 'jackal' : 'ally']);
+		}
+		else
+		{
+			moveCamera(isDad);
+			callOnScripts('onMoveCamera', [isDad ? 'dad' : 'boyfriend']);
+		}
+		
+		/*if (isDad)
 			callOnScripts('onMoveCamera', ['dad']);
 		else
-			callOnScripts('onMoveCamera', ['boyfriend']);
+			callOnScripts('onMoveCamera', ['boyfriend']);*/
 	}
 	
 	public function moveCameraToGirlfriend()
@@ -2517,6 +2539,19 @@ class PlayState extends MusicBeatState
 		camFollow.x += gf.cameraPosition[0] + girlfriendCameraOffset[0];
 		camFollow.y += gf.cameraPosition[1] + girlfriendCameraOffset[1];
 		tweenCamIn();
+	}
+
+	public function moveCameraToSecondary(isDad:Bool)
+	{
+		var char:Character = isDad ? ally : jackal;
+		if (char == null) moveCamera(isDad);
+		else
+		{
+			camFollow.setPosition(char.getMidpoint().x, char.getMidpoint().y);
+			camFollow.x += char.cameraPosition[0] + (isDad ? jackalCameraOffset[0] : allyCameraOffset[0]);
+			camFollow.y += char.cameraPosition[1] + (isDad ? jackalCameraOffset[1] : allyCameraOffset[1]);
+			tweenCamIn();
+		}
 	}
 
 	var cameraTwn:FlxTween;

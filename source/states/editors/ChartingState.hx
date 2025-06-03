@@ -2394,7 +2394,13 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 			{
 				if (mustHitIndicator.color != 0xFFA5004D)
 					mustHitIndicator.color = 0xFFA5004D;
-				if (mustHitSection)
+
+				var iconToChange:HealthIcon = mustHitSection ? iconP1 : iconP2;
+				if (isSecsSection)
+					iconToChange = mustHitSection ? iconP3 : iconP4;
+
+				iconToChange.changeIcon(gfName);
+				/*if (mustHitSection)
 					if (!isSecsSection)
 						iconP1.changeIcon(gfName);
 					else
@@ -2404,6 +2410,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 						iconP2.changeIcon(gfName);
 					else
 						iconP4.changeIcon(gfName);
+				*/
 			}
 
 			for (icon in icons)
@@ -2414,15 +2421,14 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 				icon.updateHitbox();
 				icon.centerOffsets();
 			}
-			/*iconP1.scale.set(iconP1.defaultScale * 0.3, iconP1.defaultScale * 0.3);
-			iconP2.scale.set(iconP2.defaultScale * 0.3, iconP2.defaultScale * 0.3);
 
-			iconP1.updateHitbox();
-			iconP2.updateHitbox();
-			iconP1.centerOffsets();
-			iconP2.centerOffsets();*/
+			var iconToChange:HealthIcon = mustHitSection ? iconP1 : iconP2;
+			if (isSecsSection)
+				iconToChange = mustHitSection ? iconP3 : iconP4;
 
-			if(mustHitSection)
+			mustHitIndicator.x = iconToChange.x + iconToChange.width / 2;
+
+			/*if(mustHitSection)
 				if (!isSecsSection)
 					mustHitIndicator.x = iconP1.x + iconP1.width/2;
 				else
@@ -2431,7 +2437,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 				if (!isSecsSection)
 					mustHitIndicator.x = iconP2.x + iconP2.width/2;
 				else
-					mustHitIndicator.x = iconP4.x + iconP4.width/2;
+					mustHitIndicator.x = iconP4.x + iconP4.width/2;*/
 		}
 		_lastGfSection = isGfSection;
 		_lastSecSection = isSecsSection;
@@ -2961,7 +2967,9 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		{
 			var sec = getCurChartSection();
 			if(sec != null) sec.secsSection = secondariesTurnCheckBox.checked;
+			updateHeads(true);
 		});
+		
 		changeBpmCheckBox = new PsychUICheckBox(objX, objY, 'Change BPM', 80, function()
 		{
 			var sec = getCurChartSection();
