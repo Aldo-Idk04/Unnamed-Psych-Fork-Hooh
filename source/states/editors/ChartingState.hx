@@ -2371,12 +2371,20 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		var isSecsSection:Bool = (curSecData != null && curSecData.secsSection == true);
 		if(_lastGfSection == isGfSection && _lastSec == curSec && _lastSecSection == isSecsSection && !ignoreCheck) return; //optimization
 
+		//I don't remember why it wasn't reloading it before
+   		var gfIcon:CharacterFile = loadCharacterFile(PlayState.SONG.gfVersion);
+    	gfName = gfIcon != null && gfIcon.healthicon != null ? gfIcon.healthicon : 'gf';
+
 		for (i in 0...GRID_PLAYERS)
 		{
 			var icon:HealthIcon = icons[i];
 			//trace('changing iconP${icon.ID}');
-			//trace(characterData);
 			var iconName:String = Reflect.field(characterData, 'iconP${icon.ID}');
+			if (icon.ID == 3 && (PlayState.SONG.allyVersion == null || PlayState.SONG.allyVersion == ''))
+            	iconName = gfName;
+        	else if (icon.ID == 4 && (PlayState.SONG.jackalVersion == null || PlayState.SONG.jackalVersion == ''))
+            	iconName = gfName;
+			
 			icon.changeIcon(iconName);
 		}
 
@@ -3412,6 +3420,10 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		girlfriendDropDown = new PsychUIDropDownMenu(objX, objY + 80, [''], function(id:Int, character:String)
 		{
 			PlayState.SONG.gfVersion = character;
+			var gfIcon:CharacterFile = loadCharacterFile(PlayState.SONG.gfVersion);
+    		gfName = gfIcon != null && gfIcon.healthicon != null ? gfIcon.healthicon : 'gf';
+			updateJsonData();
+			updateHeads(true);
 			trace('selected $character');
 		});
 

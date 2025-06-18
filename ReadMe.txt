@@ -49,3 +49,6 @@ Added secondaries cameras offsets
 Added camera moving to the actual sec characters
 
 Added support for sec characters for "cameraSetTarget" lua function
+
+Added new suffix for the sustain notes that actually loops (-long)
+

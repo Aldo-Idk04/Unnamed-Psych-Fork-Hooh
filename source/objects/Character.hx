@@ -330,6 +330,8 @@ class Character extends FlxSprite
 		//return flipX != realFlipX;
 	}
 
+	//Too long i should summorize this later and make it working for FlxAnimate Sprites
+
 	public function invertAnimations(?changeFlipX:Dynamic = true):Void
 	{
 		if (changeFlipX)

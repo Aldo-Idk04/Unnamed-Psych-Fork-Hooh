@@ -1,0 +1,47 @@
+{
+	"animations": [
+		{
+			"offsets": [
+				[0, 0],
+				[0, 0],
+				[0, 0],
+				[0, 0]
+			],
+			"anim": "loop",
+			"fps": 24,
+			"name": "holdCover0"
+		},
+		{
+			"offsets": [
+				[0, 0],
+				[0, 0],
+				[0, 0],
+				[0, 0]
+			],
+			"anim": "start",
+			"fps": 24,
+			"name": "holdCoverStart"
+		},
+		{
+			"offsets": [
+				[0, 0],
+				[0, 0],
+				[0, 0],
+				[0, 0]
+			],
+			"anim": "end0",
+			"fps": 24
+		},
+		{
+			"offsets": [
+				[0, 0],
+				[0, 0],
+				[0, 0],
+				[0, 0]
+			],
+			"anim": "end1",
+			"fps": 24
+		}
+	],
+	"scale": 1
+}
