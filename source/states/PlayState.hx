@@ -1255,7 +1255,7 @@ class PlayState extends MusicBeatState
 
 		updateScoreText();
 		if (!miss && !cpuControlled && scoreBop)
-			doScoreBop();
+			//doScoreBop();
 
 		callOnScripts('onUpdateScore', [miss]);
 	}
@@ -2880,7 +2880,7 @@ class PlayState extends MusicBeatState
 		else
 		{
 			rating.setGraphicSize(Std.int(rating.width * daPixelZoom * 0.85));
-			comboSpr.setGraphicSize(Std.int(comboSpr.width * daPixelZoom * 0.85));
+			comboSpr.setGraphicSize(Std.int(comboSpr.width * daPixelZoom * 0.68));
 		}
 
 		comboSpr.updateHitbox();

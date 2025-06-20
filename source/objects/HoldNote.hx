@@ -37,15 +37,18 @@ class HoldNote extends FlxSprite
         setupAnimations();
         setupRGBShader();
 
-        //centerOffsets();
-        scrollFactor.set(0, 0);
-        
         scrollFactor.set();
-        antialiasing = ClientPrefs.data.antialiasing && !PlayState.isPixelStage;
-        setGraphicSize(Std.int(width * 0.7));
-        updateHitbox();
         
+        antialiasing = ClientPrefs.data.antialiasing && !PlayState.isPixelStage;
+        if (!isPixel)
+            setGraphicSize(Std.int(width * 0.7));
+        else
+            setGraphicSize(Std.int(width * 4.5));
+
+        updateHitbox();
         alpha = 0.0001;
+
+        updatePosition();
         //holdState = HIDDEN;
     }
     
@@ -70,7 +73,6 @@ class HoldNote extends FlxSprite
             if (Assets.exists(jsonPath))
             #end
             {
-                trace('Loading hold note offsets from: ' + jsonPath);
                 var data:Dynamic = '';
                 #if MODS_ALLOWED
                 data = haxe.Json.parse(File.getContent(jsonPath));
@@ -97,6 +99,7 @@ class HoldNote extends FlxSprite
     {
         var loopAnim:String = 'holdCover0';
         var endAnim:String = 'holdCoverEnd';
+
         if (!isPixel)
         {
             animation.addByPrefix('start', 'holdCoverStart', 24, false);
@@ -107,18 +110,15 @@ class HoldNote extends FlxSprite
             endAnim = 'explode';
         }
 
-        animation.addByPrefix('loop', 'holdCover0', 24, false);
-        animation.addByIndices('end0', 'holdCoverEnd', [2, 3, 4, 5, 6], '', 24, false);
-        animation.addByIndices('end1', 'holdCoverEnd', [7, 8], '', 24, false);
+        animation.addByPrefix('loop', loopAnim, 24, false);
+        animation.addByIndices('end', endAnim, [2, 3, 4, 5, 6, 7], '', 24, false);
+        //animation.addByIndices('end0', 'holdCoverEnd', [2, 3, 4], '', 24, false);
+        //animation.addByIndices('end1', 'holdCoverEnd', [5, 6, 7], '', 24, false);
         //animation.addByPrefix('end', 'holdCoverEnd', 24, false);
 
         animation.finishCallback = function(anim:String):Void
         {
-            if (anim == 'end0')
-            {
-                playAnim('end1', true);
-            }
-            if (anim == 'end1')
+            if (anim == 'end')
             {
                 hide();
             }
@@ -144,17 +144,16 @@ class HoldNote extends FlxSprite
     {
         /*if (holdState == HIDDEN)
         {*/
-            parentStrum = strum;
-            parentNote = note;
-            
-            //x = (strum.x + strum.frameWidth / 2) - 55;
-            //y = (strum.y + strum.frameHeight / 2) - 100;
-            alpha = strum.alpha * 0.7;
-            
-            var animToPlay:String = getAnimationForNote(note);
-            playAnim(animToPlay, animToPlay != 'loop');
-            if (parentNote.noteData == 1)
-                trace(offset.x + ' ' + offset.y);
+        parentStrum = strum;
+        parentNote = note;
+
+        if (!parentNote.isSustainNote || parentNote.parent.tail[0] == null) return;
+        
+        alpha = strum.alpha * 0.7;
+        
+        var animToPlay:String = getAnimationForNote(note);
+        playAnim(animToPlay, animToPlay != 'loop');
+
          //   holdState = ACTIVE;
         //}
     }
@@ -163,14 +162,13 @@ class HoldNote extends FlxSprite
     {
         //I should probably use a switch here, but this is more readable and for now i will use only note.parent
 
-        if (!note.isSustainNote) return '';
             
         if (note.animation.name.endsWith('end'))
-            return 'end0';
+            return 'end';
         if (isPixel)
             looping = true;
+
         return looping ? 'loop' : 'start';
-    
     }
     
     public function hide():Void
@@ -186,17 +184,28 @@ class HoldNote extends FlxSprite
     {
         if (parentStrum != null)
         {
-            //x = parentStrum.getGraphicMidpoint().x;
-            //y = parentStrum.getGraphicMidpoint().y;
-            x = parentStrum.getGraphicMidpoint().x - 215;
-            y = parentStrum.getGraphicMidpoint().y - 230;
-            if (parentNote != null && (parentNote.noteData == 1 || parentNote.noteData == 2))
+            if (!isPixel)
             {
-                x -= parentNote.noteData == 1 ? 8 : 5;
-                y += parentNote.noteData == 1 ? 15 : -15;
+                x = parentStrum.x - 97.5;
+                y = parentStrum.y - 118;
+                if (parentNote != null && (parentNote.noteData == 1 || parentNote.noteData == 2))
+                {
+                    x += parentNote.noteData == 1 ? -5 : -7;
+                    y += parentNote.noteData == 1 ? 15 : -15;
+                }
+            }
+            else
+            {
+                x = parentStrum.x + 75;
+                y = parentStrum.y + 22.5;
+                if (parentNote != null && (parentNote.noteData == 1 || parentNote.noteData == 2))
+                {
+                    y += parentNote.noteData == 1 ? 5 : -5;
+                }
             }
         }
     }
+
     public function playAnim(anim:String, force:Bool = false)
     {
 
@@ -205,12 +214,10 @@ class HoldNote extends FlxSprite
 
         var offsets = animOffsets.get(anim);
         var side = noteData % 4;
-        offset.set(offsets[side][0], offsets[side][1]);
-        /*if (offsets != null && offsets.length > side)
+        if (offsets != null && offsets.length > side)
         {
-            offset.x = offsets[side][0];
-            offset.y = offsets[side][1];
-        }*/
+            offset.set(offsets[side][0], offsets[side][1]);
+        }
     }
     
     override function update(elapsed:Float):Void
@@ -218,7 +225,7 @@ class HoldNote extends FlxSprite
         super.update(elapsed);
         
         //if (holdState == ACTIVE)
-        if (alpha > 0.0001 && parentStrum != null)
+        if (alpha > 0.0001)
             updatePosition();
     }
     
