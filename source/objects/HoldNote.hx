@@ -41,14 +41,14 @@ class HoldNote extends FlxSprite
         
         antialiasing = ClientPrefs.data.antialiasing && !PlayState.isPixelStage;
         if (!isPixel)
-            setGraphicSize(Std.int(width * 0.7));
+            setGraphicSize(Std.int(width * 0.9));
         else
             setGraphicSize(Std.int(width * 4.5));
 
         updateHitbox();
         alpha = 0.0001;
 
-        updatePosition();
+        //updatePosition();
         //holdState = HIDDEN;
     }
     
@@ -62,7 +62,17 @@ class HoldNote extends FlxSprite
         }
 
         var imagePath:String = useRGBShader ? 'holdCoverRGB' : 'holdCover_${noteData % 4}';
+        // This is for the pixel stage and the rgb is disabled to use only 1 sprite sheet, the other one is just in case it doesn't exist the 4 spritesheets
+        if ((isPixel && !useRGBShader) || #if MODS_ALLOWED !FileSystem.exists(imagePath) #else !Assets.exists(imagePath) #end && !useRGBShader)
+        {
+            imagePath = 'holdCover';
+        }
+
         frames = Paths.getSparrowAtlas(prevFolder + 'holdNotes/' + imagePath);
+
+        //This is only for the holdNotes that shares 4 different covers and just 1 json file
+        if (imagePath == 'holdCover_${noteData % 4}')
+            imagePath = 'holdCover';
 
         if (useRGBShader) 
         {   
@@ -186,8 +196,8 @@ class HoldNote extends FlxSprite
         {
             if (!isPixel)
             {
-                x = parentStrum.x - 97.5;
-                y = parentStrum.y - 118;
+                x = parentStrum.x - 100;
+                y = parentStrum.y - 106.5;
                 if (parentNote != null && (parentNote.noteData == 1 || parentNote.noteData == 2))
                 {
                     x += parentNote.noteData == 1 ? -5 : -7;

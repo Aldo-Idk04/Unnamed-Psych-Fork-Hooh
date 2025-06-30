@@ -42,7 +42,7 @@ Added lua var "secsSection" (FunkinLua, PlayState)
 
 Added new characters notes (MetaNote, Song, PlayState, ChartingState)
 
-0.3
+0.22
 
 Added secondaries cameras offsets
 
@@ -52,3 +52,6 @@ Added support for sec characters for "cameraSetTarget" lua function
 
 Added new suffix for the sustain notes that actually loops (-long)
 
+Added holdNotes (json support)
+
+Minimal optimizations for PlayState.hx
