@@ -212,9 +212,6 @@ class PlayState extends MusicBeatState
 	public var practiceMode:Bool = false;
 	public var pressMissDamage:Float = 0.05;
 
-	public var botplaySine:Float = 0;
-	public var botplayTxt:FlxText;
-
 	public var iconP1:HealthIcon;
 	public var iconP2:HealthIcon;
 	public var camHUD:FlxCamera;
@@ -627,17 +624,6 @@ class PlayState extends MusicBeatState
 		scoreTxt.visible = !ClientPrefs.data.hideHud;
 		uiGroup.add(scoreTxt);
 
-		/*botplayTxt = new FlxText(400, healthBar.y - 90, FlxG.width - 800, , 32);
-		botplayTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-		botplayTxt.scrollFactor.set();
-		botplayTxt.borderSize = 1.25;
-		botplayTxt.visible = cpuControlled;
-		uiGroup.add(botplayTxt);
-		/*if(ClientPrefs.data.downScroll)
-			botplayTxt.y = healthBar.y + 70;
-
-		botplayTxt.screenCenter();*/
-
 		uiGroup.cameras = [camHUD];
 		noteGroup.cameras = [camHUD];
 		comboGroup.cameras = [camHUD];
@@ -812,11 +798,31 @@ class PlayState extends MusicBeatState
 			var newChar:Character = new Character(0, 0, newCharacter, data.needsPlayer);
 			data.map.set(newCharacter, newChar);
 			data.group.add(newChar);
+
 			//Remember that type is assigned to dad to check if it's gf
 			startCharacterPos(newChar, type == 1);
 			newChar.alpha = 0.00001;
 			startCharacterScripts(newChar.curCharacter);
 		}
+	}
+
+	private function swapCharacter(varName:String, mapName:String, icon:HealthIcon = null, iconSetter:Bool = false, scriptVar:String = null, extraLogic:Void->Void = null, newChar:String, charType:Int):Void 
+	{
+		var curChar:Character = Reflect.field(this, varName);
+		var charMap:Map<String, Character> = Reflect.field(this, mapName);
+		if (curChar == null || curChar.curCharacter == newChar) return;
+		if (!charMap.exists(newChar)) addCharacterToList(newChar, charType);
+
+		var lastAlpha = curChar.alpha;
+		curChar.alpha = 0.00001;
+		var newCharacter = charMap.get(newChar);
+		newCharacter.alpha = lastAlpha;
+		Reflect.setField(this, varName, newCharacter);
+		charactersList[charactersList.indexOf(curChar)] = newCharacter;
+
+		if (icon != null && iconSetter) icon.changeIcon(newCharacter.healthIcon);
+		if (scriptVar != null) setOnScripts(scriptVar, newCharacter.curCharacter);
+		if (extraLogic != null) extraLogic();
 	}
 
 	function startCharacterScripts(name:String)
@@ -1248,8 +1254,6 @@ class PlayState extends MusicBeatState
 			return;
 
 		updateScoreText();
-		if (!miss && !cpuControlled && scoreBop)
-			//doScoreBop();
 
 		callOnScripts('onUpdateScore', [miss]);
 	}
@@ -1271,38 +1275,24 @@ class PlayState extends MusicBeatState
 
 	public dynamic function fullComboFunction()
 	{
-		var sicks:Int = ratingsData[0].hits;
-		var goods:Int = ratingsData[1].hits;
-		var bads:Int = ratingsData[2].hits;
-		var shits:Int = ratingsData[3].hits;
-
+		/*
+			0 = sicks
+			1 = goods
+			2 = bads
+			3 = shits
+		*/
 		ratingFC = "";
-		if(songMisses == 0)
+		if (songMisses == 0) 
 		{
-			if (bads > 0 || shits > 0) ratingFC = 'FC';
-			else if (goods > 0) ratingFC = 'GFC';
-			else if (sicks > 0) ratingFC = 'SFC';
-		}
-		else {
-			if (songMisses < 10) ratingFC = 'SDCB';
-			else ratingFC = 'Clear';
-		}
-	}
-
-	public function doScoreBop():Void {
-		if(!ClientPrefs.data.scoreZoom)
-			return;
-
-		if(scoreTxtTween != null)
-			scoreTxtTween.cancel();
-
-		scoreTxt.scale.x = 1.075;
-		scoreTxt.scale.y = 1.075;
-		scoreTxtTween = FlxTween.tween(scoreTxt.scale, {x: 1, y: 1}, 0.2, {
-			onComplete: function(twn:FlxTween) {
-				scoreTxtTween = null;
-			}
-		});
+        if (ratingsData[2].hits > 0 || ratingsData[3].hits > 0) // bads or shits
+            ratingFC = 'FC';
+        else if (ratingsData[1].hits > 0) // goods
+            ratingFC = 'GFC';
+        else if (ratingsData[0].hits > 0) // sicks
+            ratingFC = 'SFC';
+    	} 
+		else 
+        	ratingFC = (songMisses < 10) ? 'SDCB' : 'Clear';
 	}
 
 	public function setSongTime(time:Float)
@@ -1831,11 +1821,6 @@ class PlayState extends MusicBeatState
 		setOnScripts('curDecStep', curDecStep);
 		setOnScripts('curDecBeat', curDecBeat);
 
-		/*if(botplayTxt != null && botplayTxt.visible) {
-			botplaySine += 180 * elapsed;
-			botplayTxt.alpha = 1 - Math.sin((Math.PI * botplaySine) / 180);
-		}*/
-
 		if (controls.PAUSE && startedCountdown && canPause)
 		{
 			var ret:Dynamic = callOnScripts('onPause', null, true);
@@ -1943,7 +1928,6 @@ class PlayState extends MusicBeatState
 					keysCheck();
 				else
 					characterBopper(null);
-					//playerDance();
 
 				if(notes.length > 0)
 				{
@@ -2235,8 +2219,6 @@ class PlayState extends MusicBeatState
 					openSubState(new GameOverSubstate(boyfriend));
 				}
 
-				// MusicBeatState.switchState(new GameOverState(boyfriend.getScreenPosition().x, boyfriend.getScreenPosition().y));
-
 				#if DISCORD_ALLOWED
 				// Game Over doesn't get his its variable because it's only used here
 				if(autoUpdateRPC) DiscordClient.changePresence("Game Over - " + detailsText, SONG.song + " (" + storyDifficultyText + ")", iconP2.getCharacter());
@@ -2394,74 +2376,36 @@ class PlayState extends MusicBeatState
 
 
 			case 'Change Character':
-				var charType:Int = 0;
-				switch(value1.toLowerCase().trim()) {
-					case 'gf' | 'girlfriend':
-						charType = 2;
-					case 'dad' | 'opponent':
-						charType = 1;
-					case 'ally':
-						charType = 3;
-					case 'jackal':
-						charType = 4;
+				var charType:Int = switch(value1.toLowerCase().trim()) 
+				{
+					case 'gf' | 'girlfriend': 2;
+					case 'dad' | 'opponent': 1;
+					case 'ally': 3;
+					case 'jackal': 4;
 					default:
-						charType = Std.parseInt(value1);
-						if(Math.isNaN(charType)) charType = 0;
+						var t = Std.parseInt(value1);
+						Math.isNaN(t) ? 0 : t;
 				}
-
-				switch(charType) {
+				switch(charType) 
+				{
 					case 0:
-						if(boyfriend.curCharacter != value2) {
-							if(!boyfriendMap.exists(value2)) {
-								addCharacterToList(value2, charType);
-							}
-
-							var lastAlpha:Float = boyfriend.alpha;
-							boyfriend.alpha = 0.00001;
-							boyfriend = boyfriendMap.get(value2);
-							boyfriend.alpha = lastAlpha;
-							iconP1.changeIcon(boyfriend.healthIcon);
-						}
-						setOnScripts('boyfriendName', boyfriend.curCharacter);
-
+						swapCharacter('boyfriend', 'boyfriendMap', iconP1, true, 'boyfriendName', null, value2, charType);
 					case 1:
-						if(dad.curCharacter != value2) {
-							if(!dadMap.exists(value2)) {
-								addCharacterToList(value2, charType);
-							}
-
-							var wasGf:Bool = dad.curCharacter.startsWith('gf-') || dad.curCharacter == 'gf';
-							var lastAlpha:Float = dad.alpha;
-							dad.alpha = 0.00001;
-							dad = dadMap.get(value2);
+						swapCharacter('dad', 'dadMap', iconP2, true, 'dadName', function() {
+							var wasGf = dad.curCharacter.startsWith('gf-') || dad.curCharacter == 'gf';
 							if(!dad.curCharacter.startsWith('gf-') && dad.curCharacter != 'gf') {
-								if(wasGf && gf != null) {
-									gf.visible = true;
-								}
-							} else if(gf != null) {
-								gf.visible = false;
-							}
-							dad.alpha = lastAlpha;
-							iconP2.changeIcon(dad.healthIcon);
-						}
-						setOnScripts('dadName', dad.curCharacter);
-
+								if(wasGf && gf != null) gf.visible = true;
+							} else if(gf != null) gf.visible = false;
+						}, value2, charType);
 					case 2:
-						if(gf != null)
-						{
-							if(gf.curCharacter != value2)
-							{
-								if(!gfMap.exists(value2)) {
-									addCharacterToList(value2, charType);
-								}
-
-								var lastAlpha:Float = gf.alpha;
-								gf.alpha = 0.00001;
-								gf = gfMap.get(value2);
-								gf.alpha = lastAlpha;
-							}
-							setOnScripts('gfName', gf.curCharacter);
-						}
+						if (gf != null)
+							swapCharacter('gf', 'gfMap', null, false, 'gfName', null, value2, charType);
+					case 3:
+						if (ally != null)
+							swapCharacter('ally', 'allyMap', null, false, 'allyName', null, value2, charType);
+					case 4:
+						if (jackal != null)
+							swapCharacter('jackal', 'jackalMap', null, false, 'jackalName', null, value2, charType);
 				}
 				reloadHealthBarColors();
 
@@ -2820,16 +2764,6 @@ class PlayState extends MusicBeatState
 			RecalculateRating(false);
 		}
 
-		/*if(!cpuControlled) {
-			songScore += score;
-			if(!note.ratingDisabled)
-			{
-				songHits++;
-				totalPlayed++;
-				RecalculateRating(false);
-			}
-		}*/
-
 		var uiFolder:String = "";
 		var antialias:Bool = ClientPrefs.data.antialiasing;
 		if (stageUI != "normal")
@@ -3101,7 +3035,6 @@ class PlayState extends MusicBeatState
 
 			if (!holdArray.contains(true) || endingSong)
 				characterBopper(null)
-				//playerDance();
 
 			#if ACHIEVEMENTS_ALLOWED
 			else checkForAchievement(['oversinging']);
@@ -3318,8 +3251,15 @@ class PlayState extends MusicBeatState
 			if(!cpuControlled)
 			{
 				var spr = playerStrums.members[note.noteData];
-				if(spr != null) spr.playAnim('confirm', true);
-
+				if(spr != null)
+				{
+					spr.playAnim('confirm', true);
+					if (!spr.animation.curAnim.paused && note.isSustainNote)
+					{
+						spr.animation.curAnim.paused = true;
+						spr.animation.curAnim.curFrame = 2;
+					}
+				}
 			}
 			else strumPlayAnim(false, Std.int(Math.abs(note.noteData)), Conductor.stepCrochet * mult * 0.001  / playbackRate);
 
@@ -3581,17 +3521,6 @@ class PlayState extends MusicBeatState
 				}
 			}
 		}
-	}
-
-	public function playerDance():Void
-	{
-		/*var anim:String = boyfriend.getAnimationName();
-		if(boyfriend.holdTimer > Conductor.stepCrochet * (0.0011 #if FLX_PITCH / FlxG.sound.music.pitch #end) * boyfriend.singDuration && anim.startsWith('sing') && !anim.endsWith('miss'))
-			boyfriend.dance();
-		if (ally == null) return;
-		var anim:String = ally.getAnimationName();
-		if(ally.holdTimer > Conductor.stepCrochet * (0.0011 #if FLX_PITCH / FlxG.sound.music.pitch #end) * boyfriend.singDuration && anim.startsWith('sing') && !anim.endsWith('miss'))
-			ally.dance();*/
 	}
 
 	override function sectionHit()

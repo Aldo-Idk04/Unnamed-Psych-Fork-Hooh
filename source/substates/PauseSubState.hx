@@ -300,9 +300,10 @@ class PauseSubState extends MusicBeatSubstate
 				case 'Toggle Botplay':
 					PlayState.instance.cpuControlled = !PlayState.instance.cpuControlled;
 					PlayState.changedDifficulty = true;
-					PlayState.instance.botplayTxt.visible = PlayState.instance.cpuControlled;
-					PlayState.instance.botplayTxt.alpha = 1;
-					PlayState.instance.botplaySine = 0;
+					if (PlayState.instance.cpuControlled)
+						PlayState.instance.scoreTxt.text = Language.getPhrase("Botplay").toUpperCase();
+					else
+						PlayState.instance.updateScoreText();
 				case 'Options':
 					PlayState.instance.paused = true; // For lua
 					PlayState.instance.vocals.volume = 0;
