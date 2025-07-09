@@ -1113,25 +1113,28 @@ class PlayState extends MusicBeatState
 				var antialias:Bool = (ClientPrefs.data.antialiasing && !isPixelStage);
 				var tick:Countdown = THREE;
 
-				switch (swagCounter)
+				if (swagCounter == 4)
+					tick = START;
+				else
 				{
-					case 0:
-						FlxG.sound.play(Paths.sound('intro3' + introSoundsSuffix), 0.6);
-						tick = THREE;
-					case 1:
-						countdownReady = createCountdownSprite(introAlts[0], antialias);
-						FlxG.sound.play(Paths.sound('intro2' + introSoundsSuffix), 0.6);
-						tick = TWO;
-					case 2:
-						countdownSet = createCountdownSprite(introAlts[1], antialias);
-						FlxG.sound.play(Paths.sound('intro1' + introSoundsSuffix), 0.6);
-						tick = ONE;
-					case 3:
-						countdownGo = createCountdownSprite(introAlts[2], antialias);
-						FlxG.sound.play(Paths.sound('introGo' + introSoundsSuffix), 0.6);
-						tick = GO;
-					case 4:
-						tick = START;
+					switch (swagCounter)
+					{
+						case 0:
+							FlxG.sound.play(Paths.sound('intro3' + introSoundsSuffix), 0.6);
+							tick = THREE;
+						case 1:
+							countdownReady = createCountdownSprite(introAlts[0], antialias);
+							FlxG.sound.play(Paths.sound('intro2' + introSoundsSuffix), 0.6);
+							tick = TWO;
+						case 2:
+							countdownSet = createCountdownSprite(introAlts[1], antialias);
+							FlxG.sound.play(Paths.sound('intro1' + introSoundsSuffix), 0.6);
+							tick = ONE;
+						case 3:
+							countdownGo = createCountdownSprite(introAlts[2], antialias);
+							FlxG.sound.play(Paths.sound('introGo' + introSoundsSuffix), 0.6);
+							tick = GO;
+					}
 				}
 
 				if(!skipArrowStartTween)
@@ -3034,7 +3037,7 @@ class PlayState extends MusicBeatState
 			}
 
 			if (!holdArray.contains(true) || endingSong)
-				characterBopper(null)
+				characterBopper(null);
 
 			#if ACHIEVEMENTS_ALLOWED
 			else checkForAchievement(['oversinging']);
@@ -3057,7 +3060,7 @@ class PlayState extends MusicBeatState
 
 		if (grpHoldNotes.members[daNote.noteData] != null)
 			grpHoldNotes.members[daNote.noteData].hide();
-
+		
 		noteMissCommon(daNote.noteData, daNote);
 		stagesFunc(function(stage:BaseStage) stage.noteMiss(daNote));
 		var result:Dynamic = callOnLuas('noteMiss', [notes.members.indexOf(daNote), daNote.noteData, daNote.noteType, daNote.isSustainNote]);
@@ -3134,30 +3137,7 @@ class PlayState extends MusicBeatState
 		totalPlayed++;
 		RecalculateRating(true);
 
-		// play character anims
-		var char:Character = boyfriend;
-		if((note != null && note.secNote)) char = ally;	
-		if (ally == null && note.secNote)
-		{
-			note.secNote = false;
-			note.gfNote = true;
-		}
-		if((note != null && note.gfNote) || (SONG.notes[curSection] != null && SONG.notes[curSection].gfSection)) char = gf;
-
-		if(char != null && (note == null || !note.noMissAnimation) && char.hasMissAnimations)
-		{
-			var postfix:String = '';
-			if(note != null) postfix = note.animSuffix;
-
-			var animToPlay:String = singAnimations[Std.int(Math.abs(Math.min(singAnimations.length-1, direction)))] + 'miss' + postfix;
-			char.playAnim(animToPlay, true);
-
-			if(char != gf && lastCombo > 5 && gf != null && gf.hasAnimation('sad'))
-			{
-				gf.playAnim('sad');
-				gf.specialAnim = true;
-			}
-		}
+		charSing(note, true, lastCombo);
 		vocals.volume = 0;
 	}
 
@@ -3304,7 +3284,7 @@ class PlayState extends MusicBeatState
 		if(!note.isSustainNote) invalidateNote(note);
 	}
 
-	public function charSing(note:Note):Void
+	public function charSing(note:Note, ?miss:Bool = false, ?lastCombo:Int):Void
 	{
 		var mustPress:Bool = note.mustPress;
 		var noteData:Int = note.noteData;
@@ -3326,7 +3306,11 @@ class PlayState extends MusicBeatState
 		var animCheck:String = char != gf ? 'hey' : 'cheer';
 		var animToPlay:String = singAnimations[Std.int(Math.abs(Math.min(singAnimations.length - 1, note.noteData)))] + note.animSuffix;
 		var canPlay:Bool = true;
-		if(note.isSustainNote)
+
+		if (miss && (note == null || !note.noMissAnimation) && char.hasMissAnimations)
+			animToPlay = singAnimations[Std.int(Math.abs(Math.min(singAnimations.length - 1, noteData)))] + 'miss' + note.animSuffix;
+		
+		if(note.isSustainNote && !miss)
 		{
 			var holdAnim:String = animToPlay + '-hold';
 			if(char.animation.exists(holdAnim)) animToPlay = holdAnim;
@@ -3340,6 +3324,16 @@ class PlayState extends MusicBeatState
 		}
 
 		if(canPlay) char.playAnim(animToPlay, true);
+
+		if (miss) 
+		{
+			if(char != gf && lastCombo > 5 && gf != null && gf.hasAnimation('sad'))
+			{
+				gf.playAnim('sad');
+				gf.specialAnim = true;
+			}	
+			return;
+		}
 		char.holdTimer = 0;
 
 		if(note.noteType == 'Hey!')
