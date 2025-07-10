@@ -1843,7 +1843,6 @@ class PlayState extends MusicBeatState
 		if (healthBar.bounds.max != null && health > healthBar.bounds.max)
 			health = healthBar.bounds.max;
 
-		//updateIconsScale(elapsed);
 		updateIconsPosition();
 
 		if (startedCountdown && !paused)
@@ -1951,8 +1950,6 @@ class PlayState extends MusicBeatState
 
 							if(daNote.mustPress)
 							{
-								/*if(cpuControlled && !daNote.blockHit && daNote.canBeHit && (daNote.isSustainNote || daNote.strumTime <= Conductor.songPosition))
-									goodNoteHit(daNote);*/
 								if(
 									(daNote.fakeHit && daNote.canBeHit && (daNote.isSustainNote || daNote.strumTime <= Conductor.songPosition))
 									||
@@ -1961,16 +1958,6 @@ class PlayState extends MusicBeatState
 								{
 									goodNoteHit(daNote);
 								}
-								/*if(daNote.fakeHit) 
-								{
-									if(daNote.canBeHit && (daNote.isSustainNote || daNote.strumTime <= Conductor.songPosition))
-										goodNoteHit(daNote);
-								} 
-								else if(cpuControlled && !daNote.blockHit && daNote.canBeHit) 
-								{
-									if(daNote.isSustainNote || daNote.strumTime <= Conductor.songPosition)
-										goodNoteHit(daNote);
-								}*/
 							}
 							else if (daNote.wasGoodHit && !daNote.hitByOpponent && (!daNote.ignoreNote || daNote.fakeHit)) 
 								opponentNoteHit(daNote);
@@ -2040,16 +2027,6 @@ class PlayState extends MusicBeatState
 	}
 
 	// Health icon updaters
-	public dynamic function updateIconsScale(elapsed:Float)
-	{
-		/*var mult:Float = FlxMath.lerp(1, iconP1.scale.x, Math.exp(-elapsed * 9 * playbackRate));
-		iconP1.scale.set(mult, mult);
-		iconP1.updateHitbox();
-
-		var mult:Float = FlxMath.lerp(1, iconP2.scale.x, Math.exp(-elapsed * 9 * playbackRate));
-		iconP2.scale.set(mult, mult);
-		iconP2.updateHitbox();*/
-	}
 
 	function updateIconsFrames(icon:HealthIcon, losingCond:Bool, winningCond:Bool, ?animated:Bool = false, ?counter:Int):Void {
 		if (icon == null)
@@ -3212,9 +3189,9 @@ class PlayState extends MusicBeatState
 		if (note.hitsoundVolume > 0 && !note.hitsoundDisabled)
 			FlxG.sound.play(Paths.sound(note.hitsound), note.hitsoundVolume);
 
+		charSing(note, note.hitCausesMiss);
 		if(!note.hitCausesMiss) //Common notes
 		{
-			charSing(note);
 
 			var mult:Float = 0.6;
 			if (note.noteSplashData.disabled || note.noteSplashData.a < 0.1 || !grpNoteSplashes.visible) mult = 0.4;
@@ -3227,7 +3204,6 @@ class PlayState extends MusicBeatState
 
 				appearHold(note);
 			}
-			//if (note.isSustainNote) mult = 0.85;
 			if(!cpuControlled)
 			{
 				var spr = playerStrums.members[note.noteData];
@@ -3243,7 +3219,6 @@ class PlayState extends MusicBeatState
 			}
 			else strumPlayAnim(false, Std.int(Math.abs(note.noteData)), Conductor.stepCrochet * mult * 0.001  / playbackRate);
 
-			//strumPlayAnim(false, Std.int(Math.abs(note.noteData)), Conductor.stepCrochet * 1.25 / 1000 / playbackRate);*/
 			vocals.volume = 1;
 
 			if (!note.isSustainNote)
@@ -3261,21 +3236,7 @@ class PlayState extends MusicBeatState
 		}
 		else //Notes that count as a miss if you hit them (Hurt notes for example)
 		{
-			if(!note.noMissAnimation)
-			{
-				switch(note.noteType)
-				{
-					case 'Hurt Note':
-						if(boyfriend.hasAnimation('hurt'))
-						{
-							boyfriend.playAnim('hurt', true);
-							boyfriend.specialAnim = true;
-						}
-				}
-			}
-
 			noteMiss(note);
-			if(!note.noteSplashData.disabled && !note.isSustainNote) spawnNoteSplashOnNote(note);
 		}
 
 		stagesFunc(function(stage:BaseStage) stage.goodNoteHit(note));
@@ -3325,7 +3286,7 @@ class PlayState extends MusicBeatState
 
 		if(canPlay) char.playAnim(animToPlay, true);
 
-		if (miss) 
+		if (miss)
 		{
 			if(char != gf && lastCombo > 5 && gf != null && gf.hasAnimation('sad'))
 			{
@@ -3344,7 +3305,12 @@ class PlayState extends MusicBeatState
 				char.specialAnim = true;
 				char.heyTimer = 0.6;
 			}
-		}	
+		}
+		else if (note.noteType == 'Hurt Note' && (char.isPlayer || char == gf) && char.hasAnimation('hurt'))
+		{
+			char.playAnim('hurt', true);
+			char.specialAnim = true;
+		}
 	}
 
 	public function appearHold(note:Note):Void
