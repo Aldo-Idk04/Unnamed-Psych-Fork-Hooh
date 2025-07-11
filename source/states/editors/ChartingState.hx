@@ -1284,7 +1284,12 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 					{
 						if(note == null || note.isEvent) continue; //Events shouldn't change note data as they don't have one
 
-						note.changeNoteData(note.songData[1] + diff);
+						var newNoteData:Int = note.songData[1] + diff;
+						note.changeNoteData(newNoteData);
+						if(note.songData.length > 5) 
+						{
+        					note.songData[5] = newNoteData;
+   						}
 						positionNoteXByData(note);
 					}
 				}
@@ -1994,9 +1999,9 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		var daStrumTime:Float = note[0];
 		var daNoteData:Int = Std.int(note[1] % GRID_COLUMNS_PER_PLAYER);
 		var col:Int = Std.int(note[1]);
-		var playerIndex:Int = Std.int(col / GRID_COLUMNS_PER_PLAYER); // 0 = J1, 1 = J2, 2 = J3, 3 = J4
+		var playerIndex:Int = Std.int(col / GRID_COLUMNS_PER_PLAYER); // 0 = P1, 1 = P2, 2 = P3, 3 = P4
 		var gottaHitNote:Bool;
-		if (!isNewNote && (originalFormat == null || originalFormat == 'psych_v1_convert'))
+		if (!isNewNote && (originalFormat != null || originalFormat != 'psych_v1') && note[5] < 8)
 		{
 			gottaHitNote = (note[1] < 4) ? section.mustHitSection : !section.mustHitSection;
 			note[1] = (note[1] % 4) + (gottaHitNote ? 0 : 4);
@@ -4783,6 +4788,10 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 				nextSectionTime = cachedSectionTimes[noteSec + 1];
 				curSectionTime = cachedSectionTimes[noteSec];
 			}
+
+		    if(note.songData.length > 5) {
+            	note.songData[5] = note.songData[1];
+        	}
 
 			var arr:Array<Dynamic> = PlayState.SONG.notes[noteSec].sectionNotes;
 			//trace('Added note with time ${note.songData[0]} at section $noteSec');

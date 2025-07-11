@@ -55,6 +55,12 @@ import crowplexus.hscript.Expr.Error as IrisError;
 import crowplexus.hscript.Printer;
 #end
 
+typedef CountdownData = {
+	sound:String,
+	tick:Countdown,
+	spriteIndex:Int
+}
+
 /**
  * This is where all the Gameplay stuff happens and is managed
  *
@@ -776,9 +782,14 @@ class PlayState extends MusicBeatState
 	}
 	#end
 
-	public function reloadHealthBarColors() {
+	public function reloadHealthBarColors() 
+	{
 		healthBar.setColors(FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]),
 			FlxColor.fromRGB(boyfriend.healthColorArray[0], boyfriend.healthColorArray[1], boyfriend.healthColorArray[2]));
+		if (healthBar.leftBar.color == healthBar.rightBar.color)
+			healthBar.setColors(0xFFFF0000, 0xFF66FF33);
+		if (cpuControlled)
+			healthBar.setColors(0xFF720004, 0xFF878787);
 	}
 
 	function initCharacterData() {
@@ -819,6 +830,7 @@ class PlayState extends MusicBeatState
 		newCharacter.alpha = lastAlpha;
 		Reflect.setField(this, varName, newCharacter);
 		charactersList[charactersList.indexOf(curChar)] = newCharacter;
+		newCharacter.invertAnimations();
 
 		if (icon != null && iconSetter) icon.changeIcon(newCharacter.healthIcon);
 		if (scriptVar != null) setOnScripts(scriptVar, newCharacter.curCharacter);
@@ -898,7 +910,6 @@ class PlayState extends MusicBeatState
 	function startCharacterPos(char:Character, ?gfCheck:Bool = false) {
 		if(gfCheck && char.curCharacter.startsWith('gf')) { //IF DAD IS GIRLFRIEND, HE GOES TO HER POSITION
 			char.setPosition(GF_X, GF_Y);
-			//char.scrollFactor.set(0.95, 0.95);
 			char.danceEveryNumBeats = 2;
 		}
 		char.x += char.positionArray[0];
@@ -1014,6 +1025,17 @@ class PlayState extends MusicBeatState
 	public var countdownGo:FlxSprite;
 	public static var startOnTime:Float = 0;
 
+	//Countdown stuff that i wanted to rewrite, there's a typedef for this just in case
+
+	private static var COUNTDOWN_STEPS:Array<CountdownData> = [
+		{sound: 'intro3', tick: THREE, spriteIndex: -1},
+		{sound: 'intro2', tick: TWO, spriteIndex: 0},
+		{sound: 'intro1', tick: ONE, spriteIndex: 1},
+		{sound: 'introGo', tick: GO, spriteIndex: 2}
+	];
+
+	var countdownGroup:FlxSpriteGroup;
+
 	function cacheCountdown()
 	{
 		var introAssets:Map<String, Array<String>> = new Map<String, Array<String>>();
@@ -1058,12 +1080,21 @@ class PlayState extends MusicBeatState
 			for (i in 0...opponentStrums.length) {
 				setOnScripts('defaultOpponentStrumX' + i, opponentStrums.members[i].x);
 				setOnScripts('defaultOpponentStrumY' + i, opponentStrums.members[i].y);
-				//if(ClientPrefs.data.middleScroll) opponentStrums.members[i].visible = false;
 
 				//Hold notes
 				createHoldNote(opponentStrums.members[i], i);
 			}
 
+			if (!skipCountdown && startOnTime <= 0) 
+			{
+            	if (countdownGroup == null)
+				{
+                	countdownGroup = new FlxSpriteGroup();
+					countdownGroup.cameras = [camHUD];
+					countdownGroup.scrollFactor.set();
+                	add(countdownGroup);
+            	}
+        	}
 
 			startedCountdown = true;
 			Conductor.songPosition = -Conductor.crochet * 5 + Conductor.offset;
@@ -1072,7 +1103,7 @@ class PlayState extends MusicBeatState
 
 			checkCharactersX();
 
-			var swagCounter:Int = 0;
+			//var swagCounter:Int = 0;
 			if (startOnTime > 0) {
 				clearNotesBefore(startOnTime);
 				setSongTime(startOnTime - 350);
@@ -1085,58 +1116,60 @@ class PlayState extends MusicBeatState
 			}
 			moveCameraSection();
 
-			startTimer = new FlxTimer().start(Conductor.crochet / 1000 / playbackRate, function(tmr:FlxTimer)
+			callCountdown();
+		}
+		return true;
+	}
+
+	function callCountdown(?swagCounter:Int = 0)
+	{
+		startTimer = new FlxTimer().start(Conductor.crochet / 1000 / playbackRate, function(tmr:FlxTimer)
+		{
+			if (startingSong)
 			{
+				characterBopper(tmr.loopsLeft);
 				if (iconsTweens)
 					updateIconsTweens();
+				
+				updateIconsStatus(tmr.loopsLeft);
+			}
+			var introAssets:Map<String, Array<String>> = new Map<String, Array<String>>();
+			var introImagesArray:Array<String> = switch(stageUI) {
+				case "pixel": ['pixelUI/ready-pixel', 'pixelUI/set-pixel', 'pixelUI/date-pixel'];
+				case "normal": ["ready", "set" ,"go"];
+				default: ['${uiPrefix}UI/ready${uiPostfix}', '${uiPrefix}UI/set${uiPostfix}', '${uiPrefix}UI/go${uiPostfix}'];
+			}
+			introAssets.set(stageUI, introImagesArray);
 
-				if (iconsAnimations || healthBar != null || healthBar.enabled || healthBar.valueFunction != null)
+			var introAlts:Array<String> = introAssets.get(stageUI);
+			var antialias:Bool = (ClientPrefs.data.antialiasing && !isPixelStage);
+			var tick:Countdown = THREE;
+
+			if (swagCounter == 4)
+				tick = START;
+			else if (swagCounter < COUNTDOWN_STEPS.length)
+			{
+				var step = COUNTDOWN_STEPS[swagCounter];
+				FlxG.sound.play(Paths.sound(step.sound + introSoundsSuffix), 0.6);
+				tick = step.tick;
+				
+				if (step.spriteIndex >= 0)
 				{
-					if (iconP1.animation.name != iconP1.getCharacter())
-						updateIconsFrames(iconP1, healthBar.percent < 20, healthBar.percent > 80 && iconP1.hasAnimation('winning'), true, tmr.loopsLeft);
+					var sprite = createCountdownSprite(introAlts[step.spriteIndex], antialias);
+					countdownGroup.add(sprite);
 					
-					if (iconP2.animation.name != iconP2.getCharacter())
-						updateIconsFrames(iconP2, healthBar.percent > 80, healthBar.percent < 20 && iconP2.hasAnimation('winning'), true, tmr.loopsLeft);
-				}
-
-				characterBopper(tmr.loopsLeft);
-
-				var introAssets:Map<String, Array<String>> = new Map<String, Array<String>>();
-				var introImagesArray:Array<String> = switch(stageUI) {
-					case "pixel": ['pixelUI/ready-pixel', 'pixelUI/set-pixel', 'pixelUI/date-pixel'];
-					case "normal": ["ready", "set" ,"go"];
-					default: ['${uiPrefix}UI/ready${uiPostfix}', '${uiPrefix}UI/set${uiPostfix}', '${uiPrefix}UI/go${uiPostfix}'];
-				}
-				introAssets.set(stageUI, introImagesArray);
-
-				var introAlts:Array<String> = introAssets.get(stageUI);
-				var antialias:Bool = (ClientPrefs.data.antialiasing && !isPixelStage);
-				var tick:Countdown = THREE;
-
-				if (swagCounter == 4)
-					tick = START;
-				else
-				{
 					switch (swagCounter)
 					{
-						case 0:
-							FlxG.sound.play(Paths.sound('intro3' + introSoundsSuffix), 0.6);
-							tick = THREE;
-						case 1:
-							countdownReady = createCountdownSprite(introAlts[0], antialias);
-							FlxG.sound.play(Paths.sound('intro2' + introSoundsSuffix), 0.6);
-							tick = TWO;
-						case 2:
-							countdownSet = createCountdownSprite(introAlts[1], antialias);
-							FlxG.sound.play(Paths.sound('intro1' + introSoundsSuffix), 0.6);
-							tick = ONE;
-						case 3:
-							countdownGo = createCountdownSprite(introAlts[2], antialias);
-							FlxG.sound.play(Paths.sound('introGo' + introSoundsSuffix), 0.6);
-							tick = GO;
+						//Legacy Psych Stuff
+						case 1: countdownReady = sprite;
+						case 2: countdownSet = sprite;
+						case 3: countdownGo = sprite;
 					}
 				}
+			}
 
+			if (startingSong)
+			{
 				if(!skipArrowStartTween)
 				{
 					notes.forEachAlive(function(note:Note) {
@@ -1153,11 +1186,9 @@ class PlayState extends MusicBeatState
 				stagesFunc(function(stage:BaseStage) stage.countdownTick(tick, swagCounter));
 				callOnLuas('onCountdownTick', [swagCounter]);
 				callOnHScript('onCountdownTick', [tick, swagCounter]);
-
-				swagCounter += 1;
-			}, 5);
-		}
-		return true;
+			}
+			swagCounter += 1;
+		}, 5);
 	}
 
 	inline private function createCountdownSprite(image:String, antialias:Bool):FlxSprite
@@ -1181,12 +1212,13 @@ class PlayState extends MusicBeatState
 				function(twn:FlxTween) {
 					remove(spr);
 					spr.destroy();
+					if (countdownGroup != null)
+						countdownGroup.remove(spr, true);
 				},
 			},
 			function(value:Float) {
 				spr.alpha = (value - 1) / 0.035;
 				spr.setGraphicSize(Std.int(startW * value), Std.int(startH * value));
-				//spr.updateHitbox();
 			}
 		);
 		return spr;
@@ -1300,29 +1332,32 @@ class PlayState extends MusicBeatState
 
 	public function setSongTime(time:Float)
 	{
-		FlxG.sound.music.pause();
-		vocals.pause();
-		opponentVocals.pause();
-
-		FlxG.sound.music.time = time - Conductor.offset;
-		#if FLX_PITCH FlxG.sound.music.pitch = playbackRate; #end
-		FlxG.sound.music.play();
-
-		if (Conductor.songPosition < vocals.length)
+		if (!startingSong)
 		{
-			vocals.time = time - Conductor.offset;
-			#if FLX_PITCH vocals.pitch = playbackRate; #end
-			vocals.play();
-		}
-		else vocals.pause();
+			FlxG.sound.music.pause();
+			vocals.pause();
+			opponentVocals.pause();
 
-		if (Conductor.songPosition < opponentVocals.length)
-		{
-			opponentVocals.time = time - Conductor.offset;
-			#if FLX_PITCH opponentVocals.pitch = playbackRate; #end
-			opponentVocals.play();
+			FlxG.sound.music.time = time - Conductor.offset;
+			#if FLX_PITCH FlxG.sound.music.pitch = playbackRate; #end
+			FlxG.sound.music.play();
+
+			if (Conductor.songPosition < vocals.length)
+			{
+				vocals.time = time - Conductor.offset;
+				#if FLX_PITCH vocals.pitch = playbackRate; #end
+				vocals.play();
+			}
+			else vocals.pause();
+
+			if (Conductor.songPosition < opponentVocals.length)
+			{
+				opponentVocals.time = time - Conductor.offset;
+				#if FLX_PITCH opponentVocals.pitch = playbackRate; #end
+				opponentVocals.play();
+			}
+			else opponentVocals.pause();
 		}
-		else opponentVocals.pause();
 		Conductor.songPosition = time;
 	}
 
@@ -1458,9 +1493,8 @@ class PlayState extends MusicBeatState
 
 				//var gottaHitNote:Bool = (songNotes[1] < totalColumns);
 				var col:Int = Std.int(songNotes[1]);
-				var playerIndex:Int = Std.int(col / 4); // 0 = J1, 1 = J2, 2 = J3, 3 = J4
+				var playerIndex:Int = Std.int(col / 4); // 0 = P1, 1 = P2, 2 = P3, 3 = P4
 				var gottaHitNote:Bool = (playerIndex % 2 == 0);
-				//var gottaHitNote:Bool = (playerIndex == 0 || playerIndex == 2);
 				if (i != 0) {
 					// CLEAR ANY POSSIBLE GHOST NOTES
 					for (evilNote in unspawnNotes) {
@@ -1481,9 +1515,8 @@ class PlayState extends MusicBeatState
 				}
 
 				var swagNote:Note = new Note(spawnTime, noteColumn, oldNote);
-				var isAlt: Bool = section.altAnim && !gottaHitNote;
+				var isAlt:Bool = section.altAnim && (gottaHitNote == section.mustHitSection);
 				swagNote.gfNote = (section.gfSection && gottaHitNote == section.mustHitSection);
-				//swagNote.secNote = (section.secsSection && gottaHitNote == section.mustHitSection);
 
 				if (!swagNote.secNote)
 					swagNote.secNote = (playerIndex > 1);
@@ -1569,14 +1602,6 @@ class PlayState extends MusicBeatState
 				makeEvent(event, i);
 
 		unspawnNotes.sort(sortByTime);
-		/*for (sus in unspawnNotes)
-		{
-			if (sus.isSustainNote && sus.animation.name.contains('end') && !isPixelStage)
-			{
-				sus.scale.y *= 0.7;
-				sus.updateHitbox();
-			}
-		}*/
 		generatedMusic = true;
 	}
 
@@ -1844,6 +1869,7 @@ class PlayState extends MusicBeatState
 			health = healthBar.bounds.max;
 
 		updateIconsPosition();
+		updateIconsStatus();
 
 		if (startedCountdown && !paused)
 		{
@@ -2001,26 +2027,7 @@ class PlayState extends MusicBeatState
 			}
 		}
 		#end
-
-		if (iconsAnimations || healthBar != null || healthBar.enabled || healthBar.valueFunction != null)
-		{
-			if (cpuControlled)
-			{
-				if (healthBar.rightBar.color != 0xFF878787)
-					healthBar.rightBar.color = 0xFF878787;
-				if (healthBar.leftBar.color != 0xFF720004)
-					healthBar.leftBar.color = 0xFF720004;
-			}
-			if (iconP1.animation.name != iconP1.getCharacter() && iconP1.animPerBeat <= 0)
-			{
-				updateIconsFrames(iconP1, healthBar.percent < 20, healthBar.percent > 80 && iconP1.hasAnimation('winning'), true);
-			}
-			if (iconP2.animation.name != iconP2.getCharacter() && iconP2.animPerBeat <= 0)
-			{
-				updateIconsFrames(iconP2, healthBar.percent > 80, healthBar.percent < 20 && iconP2.hasAnimation('winning'), true);
-			}
-		}
-
+			
 		setOnScripts('botPlay', cpuControlled);
 		callOnScripts('onUpdatePost', [elapsed]);
 
@@ -2028,9 +2035,20 @@ class PlayState extends MusicBeatState
 
 	// Health icon updaters
 
-	function updateIconsFrames(icon:HealthIcon, losingCond:Bool, winningCond:Bool, ?animated:Bool = false, ?counter:Int):Void {
-		if (icon == null)
-			return;
+	function updateIconsStatus(?counter:Int = null):Void 
+	{
+		healthBarUpdate = healthBar == null && !healthBar.enabled && healthBar.valueFunction == null;
+		if (!iconsAnimations && healthBarUpdate) return;
+
+		if (iconP1 != null && iconP1.animation != null)
+			updateIconsFrames(iconP1, healthBar.percent < 20, healthBar.percent > 80 && iconP1.animation.curAnim.frames.length == 3, iconP1.animation.name != iconP1.getCharacter(), counter);
+		if (iconP2 != null && iconP2.animation != null)
+			updateIconsFrames(iconP2, healthBar.percent > 80, healthBar.percent < 20 && iconP2.animation.curAnim.frames.length == 3, iconP2.animation.name != iconP2.getCharacter(), counter);
+	}
+
+	function updateIconsFrames(icon:HealthIcon, losingCond:Bool, winningCond:Bool, ?animated:Bool = false, ?counter:Int):Void 
+	{
+		if (icon == null) return;
 		if (!animated)
 		{
 			if (losingCond)
@@ -2040,7 +2058,7 @@ class PlayState extends MusicBeatState
 		}
 		else
 		{
-			if ((counter % icon.animPerBeat == 0 && icon.animPerBeat > 0) || icon.animPerBeat <= 0)
+			if (counter != null && (counter % icon.animPerBeat == 0 && icon.animPerBeat > 0) || icon.animPerBeat <= 0)
 			{
 				var animationToPlay:String = losingCond ? 'losing' : winningCond ? 'winning' : 'idle';
 				icon.animation.play(animationToPlay);
@@ -2056,10 +2074,13 @@ class PlayState extends MusicBeatState
 	}
 
 	var iconsAnimations:Bool = true;
+	var healthBarUpdate:Null<Bool> = null;
 	function set_health(value:Float):Float // You can alter how icon animations work here
 	{
 		value = FlxMath.roundDecimal(value, 5); //Fix Float imprecision
-		if(!iconsAnimations || healthBar == null || !healthBar.enabled || healthBar.valueFunction == null)
+		updateIconsStatus();
+		//if(!iconsAnimations || healthBar == null || !healthBar.enabled || healthBar.valueFunction == null)
+		if (!iconsAnimations && healthBarUpdate)
 		{
 			health = value;
 			return health;
@@ -2069,15 +2090,6 @@ class PlayState extends MusicBeatState
 		health = value;
 		var newPercent:Null<Float> = FlxMath.remapToRange(FlxMath.bound(healthBar.valueFunction(), healthBar.bounds.min, healthBar.bounds.max), healthBar.bounds.min, healthBar.bounds.max, 0, 100);
 		healthBar.percent = (newPercent != null ? newPercent : 0);
-
-		if (iconP1.animation.name == iconP1.getCharacter())
-		{
-			updateIconsFrames(iconP1, healthBar.percent < 20, healthBar.percent > 80 && iconP1.animation.curAnim.frames.length == 3);
-		}
-		if (iconP2.animation.name == iconP2.getCharacter())
-		{
-			updateIconsFrames(iconP2, healthBar.percent > 80, healthBar.percent < 20 && iconP2.animation.curAnim.frames.length == 3);
-		}
 
 		return health;
 	}
@@ -3148,7 +3160,8 @@ class PlayState extends MusicBeatState
 			else
 				mult = 0;
 
-			appearHold(note);
+			if (note.letHold)
+				appearHold(note);
 		}
 		//if (note.isSustainNote) mult = 0.85;
 		strumPlayAnim(true, Std.int(Math.abs(note.noteData)), Conductor.stepCrochet * mult * 0.001 / playbackRate);
@@ -3202,7 +3215,8 @@ class PlayState extends MusicBeatState
 				else
 					mult = 0;
 
-				appearHold(note);
+				if (note.letHold)
+					appearHold(note);
 			}
 			if(!cpuControlled)
 			{
@@ -3431,13 +3445,8 @@ class PlayState extends MusicBeatState
 			updateIconsTweens();
 		}
 
-		if (iconsAnimations || healthBar != null || healthBar.enabled || healthBar.valueFunction != null)
-		{
-			updateIconsFrames(iconP1, healthBar.percent < 20, healthBar.percent > 80 && iconP1.hasAnimation('winning'), true, curBeat);
-			updateIconsFrames(iconP2, healthBar.percent > 80, healthBar.percent < 20 && iconP2.hasAnimation('winning'), true, curBeat);
-		}
+		updateIconsStatus(curBeat);
 		
-
 		characterBopper(curBeat);
 
 		super.beatHit();

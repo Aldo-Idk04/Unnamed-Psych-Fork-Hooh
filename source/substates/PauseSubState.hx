@@ -299,6 +299,7 @@ class PauseSubState extends MusicBeatSubstate
 					PlayState.instance.finishSong(true);
 				case 'Toggle Botplay':
 					PlayState.instance.cpuControlled = !PlayState.instance.cpuControlled;
+					PlayState.instance.reloadHealthBarColors();
 					PlayState.changedDifficulty = true;
 					if (PlayState.instance.cpuControlled)
 						PlayState.instance.scoreTxt.text = Language.getPhrase("Botplay").toUpperCase();
