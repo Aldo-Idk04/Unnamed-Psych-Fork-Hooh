@@ -177,7 +177,6 @@ class PlayState extends MusicBeatState
 			uiPrefix = value.split("-pixel")[0].trim();
 			if (value == "pixel" || value.endsWith("-pixel")) uiPostfix = "-pixel";
 		}
-		//uiFolder = (value == 'normal' ? 'funkin' : value + 'UI') + '/';
 		return stageUI = value;
 	}
 
@@ -588,6 +587,8 @@ class PlayState extends MusicBeatState
 		ratingSystem = new RatingsLogic(this, comboGroup);
 
 		Conductor.songPosition = -Conductor.crochet * 5 + Conductor.offset;
+
+		//HUD Elements
 		var showTime:Bool = (ClientPrefs.data.timeBarType != 'Disabled');
 		timeTxt = new FlxText(STRUM_X + (FlxG.width / 2) - 248, 19, 400, "", 32);
 		timeTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
@@ -881,7 +882,6 @@ class PlayState extends MusicBeatState
 		var curChar:Character = Reflect.field(this, varName);
 		var charMap:Map<String, Character> = Reflect.getProperty(this, mapName);
 		if (curChar == null || curChar.curCharacter == newChar) return;
-		//trace(charMap.exists(newChar));
 		if (!charMap.exists(newChar)) addCharacterToList(newChar, charType);
 
 		var lastAlpha = curChar.alpha;
@@ -1095,16 +1095,10 @@ class PlayState extends MusicBeatState
 	];
 
 	var countdownGroup:FlxSpriteGroup;
-	var folderUI:String = 'funkin';
 	var introImagesArray:Array<String> = ['ready', 'set', 'go'];
 	function cacheCountdown()
 	{
 		var introAssets:Map<String, Array<String>> = new Map<String, Array<String>>();
-		/*var introImagesArray:Array<String> = switch(stageUI) {
-			case "pixel": ['pixelUI/ready-pixel', 'pixelUI/set-pixel', 'pixelUI/date-pixel'];
-			case "normal": ["ready", "set" ,"go"];
-			default: ['${uiPrefix}UI/ready${uiPostfix}', '${uiPrefix}UI/set${uiPostfix}', '${uiPrefix}UI/go${uiPostfix}'];
-		}*/
 		for (image in introImagesArray) 
 		introAssets.set(stageUI, introImagesArray);
 		var introAlts:Array<String> = introAssets.get(stageUI);
@@ -1194,11 +1188,6 @@ class PlayState extends MusicBeatState
 		startTimer = new FlxTimer().start(Conductor.crochet / 1000 / playbackRate, function(tmr:FlxTimer)
 		{
 			var introAssets:Map<String, Array<String>> = new Map<String, Array<String>>();
-			/*var introImagesArray:Array<String> = switch(stageUI) {
-				case "pixel": ['pixelUI/ready-pixel', 'pixelUI/set-pixel', 'pixelUI/date-pixel'];
-				case "normal": ["ready", "set" ,"go"];
-				default: ['${uiPrefix}UI/ready${uiPostfix}', '${uiPrefix}UI/set${uiPostfix}', '${uiPrefix}UI/go${uiPostfix}'];
-			}*/
 			introAssets.set(stageUI, introImagesArray);
 
 			var introAlts:Array<String> = introAssets.get(stageUI);
@@ -1552,11 +1541,11 @@ class PlayState extends MusicBeatState
 
 			for (i in 0...section.sectionNotes.length)
 			{
-				final songNotes: Array<Dynamic> = section.sectionNotes[i];
-				var spawnTime: Float = songNotes[0];
-				var noteColumn: Int = Std.int(songNotes[1] % totalColumns);
-				var holdLength: Float = songNotes[2];
-				var noteType: String = !Std.isOfType(songNotes[3], String) ? Note.defaultNoteTypes[songNotes[3]] : songNotes[3];
+				final songNotes:Array<Dynamic> = section.sectionNotes[i];
+				var spawnTime:Float = songNotes[0];
+				var noteColumn:Int = Std.int(songNotes[1] % totalColumns);
+				var holdLength:Float = songNotes[2];
+				var noteType:String = !Std.isOfType(songNotes[3], String) ? Note.defaultNoteTypes[songNotes[3]] : songNotes[3];
 				if (Math.isNaN(holdLength))
 					holdLength = 0.0;
 
@@ -2196,6 +2185,7 @@ class PlayState extends MusicBeatState
 			vocals.pause();
 			opponentVocals.pause();
 		}
+
 		if(!cpuControlled)
 		{
 			for (note in playerStrums)
@@ -2205,53 +2195,13 @@ class PlayState extends MusicBeatState
 					note.resetAnim = 0;
 				}
 		}
+
 		openSubState(new PauseSubState());
 
 		#if DISCORD_ALLOWED
 		if(autoUpdateRPC) DiscordClient.changePresence(detailsPausedText, SONG.song + " (" + storyDifficultyText + ")", iconP2.getCharacter());
 		#end
 	}
-
-	/*function openChartEditor()
-	{
-		canResync = false;
-		FlxG.camera.followLerp = 0;
-		persistentUpdate = false;
-		chartingMode = true;
-		paused = true;
-
-		if(FlxG.sound.music != null)
-			FlxG.sound.music.stop();
-		if(vocals != null)
-			vocals.pause();
-		if(opponentVocals != null)
-			opponentVocals.pause();
-
-		#if DISCORD_ALLOWED
-		DiscordClient.changePresence("Chart Editor", null, null, true);
-		DiscordClient.resetClientID();
-		#end
-
-		MusicBeatState.switchState(new ChartingState());
-	}
-
-	function openCharacterEditor()
-	{
-		canResync = false;
-		FlxG.camera.followLerp = 0;
-		persistentUpdate = false;
-		paused = true;
-
-		if(FlxG.sound.music != null)
-			FlxG.sound.music.stop();
-		if(vocals != null)
-			vocals.pause();
-		if(opponentVocals != null)
-			opponentVocals.pause();
-
-		#if DISCORD_ALLOWED DiscordClient.resetClientID(); #end
-		MusicBeatState.switchState(new CharacterEditorState(SONG.player2));
-	}*/
 
 	function openEditor(editor:String)
 	{

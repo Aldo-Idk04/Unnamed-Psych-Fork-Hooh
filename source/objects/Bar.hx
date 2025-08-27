@@ -25,35 +25,20 @@ class Bar extends FlxSpriteGroup
 		this.valueFunction = valueFunction;
 		setBounds(boundX, boundY);
 
-		image ?= searchImage();
-		
 		bg = new FlxSprite().loadGraphic(Paths.image(image));
-		//bg.antialiasing = ClientPrefs.data.antialiasing;
 		barWidth = Std.int(bg.width - 6);
 		barHeight = Std.int(bg.height - 6);
 
-		//leftBar = new FlxSprite().makeGraphic(Std.int(bg.width), Std.int(bg.height), FlxColor.WHITE);
-		/*leftBar = new FlxSprite().makeGraphic(1, 1, FlxColor.WHITE);
-		leftBar.setGraphicSize(Std.int(bg.width), Std.int(bg.height));*/
-		//leftBar.color = FlxColor.WHITE;
-		//leftBar.antialiasing = antialiasing = ClientPrefs.data.antialiasing;
+		leftBar = new FlxSprite().loadGraphic(Paths.image(image + '_filler'));
+		rightBar = new FlxSprite().loadGraphic(Paths.image(image + '_filler'));
 
-		//rightBar = new FlxSprite().makeGraphic(Std.int(bg.width), Std.int(bg.height), FlxColor.WHITE);
-		/*rightBar = new FlxSprite().makeGraphic(1, 1, FlxColor.WHITE);
-		rightBar.setGraphicSize(Std.int(bg.width), Std.int(bg.height));*/
-
-		leftBar = new FlxSprite();
-		rightBar = new FlxSprite();
-		if (_hasFiller)
+		if (leftBar.frames == null && rightBar.frames == null)
 		{
-
+			leftBar.makeGraphic(Std.int(bg.width), Std.int(bg.height), FlxColor.WHITE);
+			rightBar.makeGraphic(Std.int(bg.width), Std.int(bg.height), FlxColor.WHITE);
 		}
-		else
-		{
-			
-		}
+		
 		rightBar.color = FlxColor.BLACK;
-		//rightBar.antialiasing = ClientPrefs.data.antialiasing;
 
 		bg.antialiasing = leftBar.antialiasing = rightBar.antialiasing = antialiasing = ClientPrefs.data.antialiasing && !PlayState.isPixelStage;
 		
@@ -78,11 +63,6 @@ class Bar extends FlxSpriteGroup
 		}
 		else percent = 0;
 		super.update(elapsed);
-	}
-
-	public function searchImage():String
-	{
-
 	}
 	
 	public function setBounds(min:Float, max:Float)
