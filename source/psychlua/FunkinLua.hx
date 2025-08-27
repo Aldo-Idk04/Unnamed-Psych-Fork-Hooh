@@ -817,13 +817,15 @@ class FunkinLua {
 			switch(target.trim().toLowerCase())
 			{
 				case 'gf', 'girlfriend':
-					game.moveCameraToGirlfriend();
+					game.moveCameraToCharacter('gf');
 				case 'dad', 'opponent':
-					game.moveCamera(true);
+					game.moveCameraToCharacter('dad');
 				case 'ally', 'jackal':
-					game.moveCameraToSecondary(target == 'jackal');
+					game.moveCameraToCharacter(target == 'jackal' ? 'ally' : 'jackal');
+				case 'boyfriend', 'bf':
+					game.moveCameraToCharacter('boyfriend');
 				default:
-					game.moveCamera(false);
+					game.moveCameraToCharacter(target);
 			}
 		});
 

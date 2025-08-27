@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/Inst.ogg-030bd10eb140a660076e7d61ec771f9a.oggstr"
+
+[deps]
+
+source_file="res://assets/songs/not-above-death/Inst.ogg"
+dest_files=[ "res://.import/Inst.ogg-030bd10eb140a660076e7d61ec771f9a.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

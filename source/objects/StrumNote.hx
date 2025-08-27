@@ -16,6 +16,7 @@ class StrumNote extends FlxSprite
 	private var player:Int;
 	
 	public var texture(default, set):String = null;
+
 	private function set_texture(value:String):String {
 		if(texture != value) {
 			texture = value;
@@ -25,6 +26,8 @@ class StrumNote extends FlxSprite
 	}
 
 	public var useRGBShader:Bool = true;
+
+	var folder:String = null;
 	public function new(x:Float, y:Float, leData:Int, player:Int) {
 		animation = new PsychAnimationController(this);
 
@@ -54,8 +57,9 @@ class StrumNote extends FlxSprite
 		var skin:String = null;
 		if(PlayState.SONG != null && PlayState.SONG.arrowSkin != null && PlayState.SONG.arrowSkin.length > 1) skin = PlayState.SONG.arrowSkin;
 		else skin = Note.defaultNoteSkin;
-
-		var customSkin:String = skin + Note.getNoteSkinPostfix();
+		folder = PlayState.stageUI + 'UI/';
+		//folder = PlayState.stageUI == 'normal' ? 'funkin/' : PlayState.stageUI + 'UI/';
+		var customSkin:String = folder + skin + Note.getNoteSkinPostfix();
 		if(Paths.fileExists('images/$customSkin.png', IMAGE)) skin = customSkin;
 
 		texture = skin; //Load texture and anims
@@ -70,10 +74,12 @@ class StrumNote extends FlxSprite
 
 		if(PlayState.isPixelStage)
 		{
-			loadGraphic(Paths.image('pixelUI/' + texture));
+			loadGraphic(Paths.image(texture));
+			///loadGraphic(Paths.image('pixelUI/' + texture));
 			width = width / 4;
 			height = height / 5;
-			loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
+			loadGraphic(Paths.image(texture), true, Math.floor(width), Math.floor(height));
+			//loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
 
 			antialiasing = false;
 			setGraphicSize(Std.int(width * PlayState.daPixelZoom));
@@ -167,5 +173,17 @@ class StrumNote extends FlxSprite
 			centerOrigin();
 		}
 		if(useRGBShader) rgbShader.enabled = (animation.curAnim != null && animation.curAnim.name != 'static');
+	}
+
+	public function specialPlay(time:Float) 
+	{
+		var animToPlay:String = 'confirm';
+		playAnim(animToPlay, true);
+		resetAnim = time;
+		if (resetAnim == 0 && !animation.curAnim.paused)
+		{
+			animation.curAnim.paused = true;
+			animation.curAnim.curFrame = 2;
+		}
 	}
 }

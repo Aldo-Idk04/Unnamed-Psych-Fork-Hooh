@@ -66,6 +66,10 @@ enum abstract WaveformTarget(String)
 
 class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychUIEvent
 {
+    private static var lastSongPath:String = null;
+    private static var lastSongPosition:Float = 0;
+    private static var lastSection:Int = 0;
+
 	public static final defaultEvents:Array<Array<String>> =
 	[
 		['', "Nothing. Yep, that's right."], //Always leave this one empty pls
@@ -167,6 +171,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 	var mustHitIndicator:FlxSprite;
 	var eventIcon:FlxSprite;
 	var icons:Array<HealthIcon> = [];
+	var charNames:Array<FlxText> = [];
 	var gfName:String = '';
 
 	var events:Array<EventMetaNote> = [];
@@ -360,7 +365,7 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 			icon.y = iconY;
 			icon.alpha = 0.6;
 			icon.scrollFactor.set();
-			icon.scale.set(0.3, 0.3);
+			icon.scale.set(icon.defaultScale * 0.3, icon.defaultScale * 0.3);
 			icon.updateHitbox();
 			icon.ID = i + 1;
 			add(icon);
@@ -368,6 +373,12 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 			
 			icon.x = iconX + GRID_SIZE * (GRID_COLUMNS_PER_PLAYER/2) - icon.width/2;
 			iconX += GRID_SIZE * GRID_COLUMNS_PER_PLAYER;
+
+			var text:FlxText = new FlxText((icon.x + icon.width / 2) - FlxG.width / 2, icon.y + icon.height - 90, FlxG.width, '', 12);
+			text.setFormat(Paths.font('vcr.ttf'), 12, FlxColor.WHITE, CENTER);
+			text.scrollFactor.set();
+			add(text);
+			charNames.push(text);
 		}
 		prevGridBg.stripes = nextGridBg.stripes = gridBg.stripes = gridStripes;
 		
@@ -535,6 +546,27 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		].join('\n');
 		fullTipText.screenCenter();
 		add(fullTipText);
+
+        var currentSongPath:String = Song.chartPath != null ? Song.chartPath : PlayState.SONG.song;
+        if(currentSongPath == lastSongPath && lastSongPosition > 0)
+        {
+            Conductor.songPosition = lastSongPosition;
+            if(FlxG.sound.music != null) 
+            {
+                FlxG.sound.music.time = lastSongPosition - Conductor.offset;
+                vocals.time = FlxG.sound.music.time;
+                opponentVocals.time = FlxG.sound.music.time;
+            }
+            curSec = lastSection;
+            loadSection();
+            forceDataUpdate = true;
+        }
+        else
+        {
+            lastSongPosition = 0;
+            lastSection = 0;
+        }
+
 		super.create();
 	}
 
@@ -1489,8 +1521,9 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 						var strumNote:StrumNote = strumLineNotes.members[note.songData[1]];
 						if(strumNote != null)
 						{
-							strumNote.playAnim('confirm', true);
-							strumNote.resetAnim = Math.max(Conductor.stepCrochet * 1.25, note.sustainLength) / 1000 / playbackRate;
+							/*strumNote.playAnim('confirm', true);
+							strumNote.resetAnim = Math.max(Conductor.stepCrochet * 1.25, note.sustainLength) / 1000 / playbackRate;*/
+							strumNote.specialPlay(Math.max(Conductor.stepCrochet * 1.25, note.sustainLength) / 1000 / playbackRate);
 						}
 					}
 				}
@@ -1801,6 +1834,14 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 	var cachedSectionBPMs:Array<Float>;
 	function loadChart(song:SwagSong)
 	{
+        var newSongPath:String = Song.chartPath != null ? Song.chartPath : song.song;
+        if(lastSongPath != null && lastSongPath != newSongPath)
+        {
+            lastSongPath = null;
+            lastSongPosition = 0;
+            lastSection = 0;
+        }
+
 		if(Reflect.hasField(song, 'song'))
 		{
 			var subSong:SwagSong = Reflect.field(song, 'song');
@@ -1893,9 +1934,19 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 	function onSongComplete()
 	{
 		trace('song completed');
-		setSongPlaying(false);
+		/*setSongPlaying(false);
 		Conductor.songPosition = FlxG.sound.music.time = vocals.time = opponentVocals.time = FlxG.sound.music.length - 1;
 		curSec = PlayState.SONG.notes.length - 1;
+		forceDataUpdate = true;*/
+		Conductor.songPosition = FlxG.sound.music.time = vocals.time = opponentVocals.time = 0;
+		curSec = 0;
+		loadSection();
+		
+		if(FlxG.sound.music.playing)
+		{
+			setSongPlaying(true);
+		}
+		
 		forceDataUpdate = true;
 	}
 
@@ -2391,6 +2442,13 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
             	iconName = gfName;
 			
 			icon.changeIcon(iconName);
+			icon.scale.set(icon.defaultScale * 0.3, icon.defaultScale * 0.3);
+			icon.updateHitbox();
+
+			//Best check in the humanity existence LMFAO
+			charNames[i].text = iconName + '\n'+ (['player', 'opponent', 'ally', 'jackal'])[i];
+			if (icon.ID == 3 && (PlayState.SONG.allyVersion == null || PlayState.SONG.allyVersion == '') || icon.ID == 4 && (PlayState.SONG.jackalVersion == null || PlayState.SONG.jackalVersion == ''))
+				charNames[i].text += '/gf';
 		}
 
 		if(icons.length > 1)
@@ -4238,6 +4296,11 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		btnY += 20;
 		var btn:PsychUIButton = new PsychUIButton(btnX, btnY, '  Exit', function()
 		{
+			var currentSongPath:String = Song.chartPath != null ? Song.chartPath : PlayState.SONG.song;
+			lastSongPath = currentSongPath;
+			lastSongPosition = Conductor.songPosition;
+			lastSection = curSec;
+
 			PlayState.chartingMode = false;
 			MusicBeatState.switchState(new states.editors.MasterEditorMenu());
 			FlxG.sound.playMusic(Paths.music('freakyMenu'));
@@ -5014,6 +5077,11 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 		setSongPlaying(false);
 		chartEditorSave.flush(); //just in case a random crash happens before loading
 
+        var currentSongPath:String = Song.chartPath != null ? Song.chartPath : PlayState.SONG.song;
+        lastSongPath = currentSongPath;
+        lastSongPosition = Conductor.songPosition;
+        lastSection = curSec;
+
 		openSubState(new EditorPlayState(cast notes, [vocals, opponentVocals]));
 		upperBox.isMinimized = true;
 		upperBox.visible = mainBox.visible = infoBox.visible = false;
@@ -5021,6 +5089,11 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 
 	function goToPlayState()
 	{
+		var currentSongPath:String = Song.chartPath != null ? Song.chartPath : PlayState.SONG.song;
+		lastSongPath = currentSongPath;
+		lastSongPosition = Conductor.songPosition;
+		lastSection = curSec;
+
 		persistentUpdate = false;
 		FlxG.mouse.visible = false;
 		chartEditorSave.flush();
@@ -5327,6 +5400,14 @@ class ChartingState extends MusicBeatState implements PsychUIEventHandler.PsychU
 			}
 		}
 	}
+	/*var totalGridWidth:Int = Std.int(GRID_SIZE * GRID_COLUMNS_PER_PLAYER * GRID_PLAYERS);
+	var waveformWidth:Int = Std.int(totalGridWidth / 2); 
+	var positionOffsets:Array<Float> = [
+    	0,
+    	totalGridWidth / 4,
+    	totalGridWidth / 2
+	];*/
+
 
 	// Ported from the old chart editor
 	var wavData:Array<Array<Array<Float>>> = [[[0], [0]], [[0], [0]]];

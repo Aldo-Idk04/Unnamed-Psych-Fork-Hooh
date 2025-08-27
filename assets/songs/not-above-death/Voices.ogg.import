@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/Voices.ogg-c69f53ec02ed4992b8da064b4bd81bc0.oggstr"
+
+[deps]
+
+source_file="res://assets/songs/not-above-death/Voices.ogg"
+dest_files=[ "res://.import/Voices.ogg-c69f53ec02ed4992b8da064b4bd81bc0.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

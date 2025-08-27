@@ -799,23 +799,38 @@ class CharacterEditorState extends MusicBeatState implements PsychUIEventHandler
 		character.color = FlxColor.WHITE;
 		character.alpha = 1;
 
-		if(Paths.fileExists('images/' + character.imageFile + '/Animation.json', TEXT))
+		character.imageFile = imageInputText.text;
+
+		var cleanImagePath:String = imageInputText.text;
+		if(cleanImagePath.startsWith('characters/')) {
+			cleanImagePath = cleanImagePath.substring(11);
+		}
+
+		if(Paths.fileExists('images/characters/' + character.imageFile + '/Animation.json', TEXT))
 		{
 			character.atlas = new FlxAnimate();
 			character.atlas.showPivot = false;
 			try
 			{
-				Paths.loadAnimateAtlas(character.atlas, character.imageFile);
+				Paths.loadAnimateAtlas(character.atlas, 'characters/' + cleanImagePath);
 			}
 			catch(e:Dynamic)
 			{
-				FlxG.log.warn('Could not load atlas ${character.imageFile}: $e');
+				FlxG.log.warn('Could not load atlas ${cleanImagePath}: $e');
 			}
 			character.isAnimateAtlas = true;
 		}
 		else
 		{
-			character.frames = Paths.getMultiAtlas(character.imageFile.split(','));
+			if(cleanImagePath.contains(',')) {
+				var imageArray = cleanImagePath.split(',');
+				for(i in 0...imageArray.length) {
+					imageArray[i] = 'characters/' + imageArray[i];
+				}
+				character.frames = Paths.getMultiAtlas(imageArray);
+			} else {
+				character.frames = Paths.getSparrowAtlas('characters/' + cleanImagePath);
+			}
 		}
 
 		for (anim in anims) {

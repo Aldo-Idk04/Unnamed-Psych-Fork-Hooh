@@ -16,6 +16,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu
 		title = Language.getPhrase('visuals_menu', 'Visuals Settings');
 		rpcTitle = 'Visuals Settings Menu'; //for Discord Rich Presence
 
+		#if NOTES_TEXTURE_OPTION
 		// for note skins and splash skins
 		notes = new FlxTypedGroup<StrumNote>();
 		splashes = new FlxTypedGroup<NoteSplash>();
@@ -25,7 +26,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu
 			changeNoteSkin(note);
 			notes.add(note);
 			
-			var splash:NoteSplash = new NoteSplash(0, 0, NoteSplash.defaultNoteSplash + NoteSplash.getSplashSkinPostfix());
+			var splash:NoteSplash = new NoteSplash(0, 0, 'normalUI' + NoteSplash.defaultNoteSplash + NoteSplash.getSplashSkinPostfix());
 			splash.inEditor = true;
 			splash.babyArrow = note;
 			splash.ID = i;
@@ -34,7 +35,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu
 		}
 
 		// options
-		var noteSkins:Array<String> = Mods.mergeAllTextsNamed('images/noteSkins/list.txt');
+		var noteSkins:Array<String> = Mods.mergeAllTextsNamed('images/normalUI/noteSkins/list.txt');
 		if(noteSkins.length > 0)
 		{
 			if(!noteSkins.contains(ClientPrefs.data.noteSkin))
@@ -51,7 +52,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu
 			noteOptionID = optionsArray.length - 1;
 		}
 		
-		var noteSplashes:Array<String> = Mods.mergeAllTextsNamed('images/noteSplashes/list.txt');
+		var noteSplashes:Array<String> = Mods.mergeAllTextsNamed('images/normalUI/noteSplashes/list.txt');
 		if(noteSplashes.length > 0)
 		{
 			if(!noteSplashes.contains(ClientPrefs.data.splashSkin))
@@ -78,6 +79,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu
 		option.decimals = 1;
 		addOption(option);
 		option.onChange = playNoteSplashes;
+		#end
 
 		var option:Option = new Option('Hide HUD',
 			'If checked, hides most HUD elements.',
@@ -161,15 +163,18 @@ class VisualsSettingsSubState extends BaseOptionsMenu
 		addOption(option);
 
 		super();
+		#if NOTES_TEXTURE_OPTION
 		add(notes);
 		add(splashes);
+		#end
 	}
 
 	var notesShown:Bool = false;
 	override function changeSelection(change:Int = 0)
 	{
 		super.changeSelection(change);
-		
+
+		#if NOTES_TEXTURE_OPTION
 		switch(curOption.variable)
 		{
 			case 'noteSkin', 'splashSkin', 'splashAlpha':
@@ -195,6 +200,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu
 				}
 				notesShown = false;
 		}
+		#end
 	}
 
 	var changedMusic:Bool = false;
@@ -208,6 +214,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu
 		changedMusic = true;
 	}
 
+	#if NOTES_TEXTURE_OPTION
 	function onChangeNoteSkin()
 	{
 		notes.forEachAlive(function(note:StrumNote) {
@@ -220,7 +227,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu
 	function changeNoteSkin(note:StrumNote)
 	{
 		var skin:String = Note.defaultNoteSkin;
-		var customSkin:String = skin + Note.getNoteSkinPostfix();
+		var customSkin:String = 'normakUI/' + skin + Note.getNoteSkinPostfix();
 		if(Paths.fileExists('images/$customSkin.png', IMAGE)) skin = customSkin;
 
 		note.texture = skin; //Load texture and anims
@@ -230,7 +237,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu
 
 	function onChangeSplashSkin()
 	{
-		var skin:String = NoteSplash.defaultNoteSplash + NoteSplash.getSplashSkinPostfix();
+		var skin:String = 'normalUI' + NoteSplash.defaultNoteSplash + NoteSplash.getSplashSkinPostfix();
 		for (splash in splashes)
 			splash.loadSplash(skin);
 
@@ -279,6 +286,7 @@ class VisualsSettingsSubState extends BaseOptionsMenu
 				splash.animation.curAnim.frameRate = FlxG.random.int(minFps, maxFps);
 		}
 	}
+	#end
 
 	override function destroy()
 	{

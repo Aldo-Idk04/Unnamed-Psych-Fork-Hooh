@@ -29,7 +29,6 @@ class HoldNote extends FlxSprite
     public function new(x:Float = 0, y:Float = 0, noteData:Int, ?isPlayer:Bool = false)
     {
         super(x, y);
-        
         this.noteData = noteData;
         /*this.isPlayer = isPlayer;
         */
@@ -50,11 +49,12 @@ class HoldNote extends FlxSprite
 
         //updatePosition();
         //holdState = HIDDEN;
+
     }
     
     private function setupGraphics():Void
     {
-        var prevFolder:String = '';
+        var prevFolder:String = 'funkin/';
         if (PlayState.isPixelStage)
         {
             prevFolder = 'pixelUI/';
@@ -62,14 +62,26 @@ class HoldNote extends FlxSprite
         }
 
         var imagePath:String = useRGBShader ? 'holdCoverRGB' : 'holdCover_${noteData % 4}';
+
+        var fileExists:Bool = false;
+        #if MODS_ALLOWED
+        fileExists = FileSystem.exists(Paths.modFolders('images/' + prevFolder + 'holdNotes/' + imagePath + '.png'));
+        #else
+        fileExists = Assets.exists(Paths.getSharedPath('images/' + prevFolder + 'holdNotes/' + imagePath + '.png'));
+        #end
         // This is for the pixel stage and the rgb is disabled to use only 1 sprite sheet, the other one is just in case it doesn't exist the 4 spritesheets
-        if ((isPixel && !useRGBShader) || #if MODS_ALLOWED !FileSystem.exists(imagePath) #else !Assets.exists(imagePath) #end && !useRGBShader)
+        if ((isPixel && !useRGBShader) || fileExists && !useRGBShader)
         {
             imagePath = 'holdCover';
         }
 
         frames = Paths.getSparrowAtlas(prevFolder + 'holdNotes/' + imagePath);
 
+        if (frames == null)
+        {
+            imagePath = 'holdCoverRGB';
+            trace('HoldNote: No frames found for ' + prevFolder + 'holdNotes/' + imagePath + '.png');
+        }
         //This is only for the holdNotes that shares 4 different covers and just 1 json file
         if (imagePath == 'holdCover_${noteData % 4}')
             imagePath = 'holdCover';

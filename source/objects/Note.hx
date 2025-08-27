@@ -99,7 +99,7 @@ class Note extends FlxSprite
 
 	public var fakeHit:Bool = false;
 
-	public var letHold:Bool = true;
+	public var letHold:Bool = false;
 
 	public static var SUSTAIN_SIZE:Int = 44;
 	public static var swagWidth:Float = 160 * 0.7;
@@ -237,12 +237,12 @@ class Note extends FlxSprite
 				//	secNote = true;
 				case 'Fake Note':
 					ignoreNote = true;
-					blockHit= true;
+					blockHit = true;
 					multAlpha = 0.35;
 					fakeHit = true;
 				case 'Invi Fake Note':
 					ignoreNote = true;
-					blockHit= true;
+					blockHit = true;
 					multAlpha = 0.00001;
 					fakeHit = true;
 			}
@@ -302,6 +302,7 @@ class Note extends FlxSprite
 			alpha = 0.6;
 			multAlpha = 0.6;
 			hitsoundDisabled = true;
+			letHold = true;
 			if(ClientPrefs.data.downScroll) flipY = true;
 
 			offsetX += width / 2;
@@ -323,12 +324,13 @@ class Note extends FlxSprite
 			if (prevNote.isSustainNote)
 			{
 				prevNote.animation.play(colArray[prevNote.noteData % colArray.length] + 'hold');
-
-				prevNote.scale.y *= Conductor.stepCrochet / 100 * 1.05;
+				if (!PlayState.isPixelStage)
+					prevNote.scale.y = Conductor.stepCrochet / 100 * 1.031;
+			
 				if(createdFrom != null && createdFrom.songSpeed != null) prevNote.scale.y *= createdFrom.songSpeed;
 
-				if(PlayState.isPixelStage) {
-					prevNote.scale.y *= 1.19;
+				if(PlayState.isPixelStage) { //1.19
+					prevNote.scale.y *= Conductor.stepCrochet / 100 * 1.25;
 					prevNote.scale.y *= (6 / height); //Auto adjust note size
 				}
 				prevNote.updateHitbox();
@@ -401,7 +403,8 @@ class Note extends FlxSprite
 		var lastScaleY:Float = scale.y;
 		var skinPostfix:String = getNoteSkinPostfix();
 		var customSkin:String = skin + skinPostfix;
-		var path:String = PlayState.isPixelStage ? 'pixelUI/' : '';
+		var path:String = PlayState.stageUI + 'UI/';
+		//var path:String = PlayState.isPixelStage ? 'pixelUI/' : '';
 		if(customSkin == _lastValidChecked || Paths.fileExists('images/' + path + customSkin + '.png', IMAGE))
 		{
 			skin = customSkin;
@@ -411,11 +414,13 @@ class Note extends FlxSprite
 
 		if(PlayState.isPixelStage) {
 			if(isSustainNote) {
-				var graphic = Paths.image('pixelUI/' + skinPixel + 'ENDS' + skinPostfix);
+				var graphic = Paths.image(path + skinPixel + 'ENDS' + skinPostfix);
+				//var graphic = Paths.image('pixelUI/' + skinPixel + 'ENDS' + skinPostfix);
 				loadGraphic(graphic, true, Math.floor(graphic.width / 4), Math.floor(graphic.height / 2));
 				originalHeight = graphic.height / 2;
 			} else {
-				var graphic = Paths.image('pixelUI/' + skinPixel + skinPostfix);
+				var graphic = Paths.image(path + skinPixel + skinPostfix);
+				//var graphic = Paths.image('pixelUI/' + skinPixel + skinPostfix);
 				loadGraphic(graphic, true, Math.floor(graphic.width / 4), Math.floor(graphic.height / 5));
 			}
 			setGraphicSize(Std.int(width * PlayState.daPixelZoom));
@@ -428,7 +433,7 @@ class Note extends FlxSprite
 				offsetX -= _lastNoteOffX;
 			}
 		} else {
-			frames = Paths.getSparrowAtlas(skin);
+			frames = Paths.getSparrowAtlas(path + skin);
 			loadNoteAnims();
 			if(!isSustainNote)
 			{
@@ -520,27 +525,6 @@ class Note extends FlxSprite
 				alpha = 0.3;
 		}
 
-		/*if (isSustainNote)
-		{
-			var scaleSus:Float = (((120 / PlayState.SONG.bpm) * (PlayState.instance.songSpeed * 1.278414)) * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1)) + (0.000014 * PlayState.instance.songSpeed);
-			updateScale(scaleSus);
-		}*/
-	}
-
-	function updateScale(scaleSus:Float)
-	{
-		if (scale.y != scaleSus * (SUSTAIN_SIZE / (frameHeight * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1))))
-		{
-			if (!StringTools.endsWith(animation.name, 'end'))
-			{
-				scale.y = scaleSus * (SUSTAIN_SIZE / (frameHeight * (PlayState.isPixelStage ? (PlayState.daPixelZoom * 1.222222222) : 1)));
-				//y += 15;
-				//offsetY -= 10;
-				updateHitbox();
-			}
-			else offsetY = 0.01375;
-			antialiasing = false;
-		}
 	}
 
 	override public function destroy()

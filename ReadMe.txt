@@ -55,3 +55,16 @@ Added new suffix for the sustain notes that actually loops (-long)
 Added holdNotes (json support)
 
 Minimal optimizations for PlayState.hx
+
+0.23 
+Flexible bars (not finished) from Bar.hx
+
+song event classes (still a wip) from states/songs/SongName.hx ex:Tutorial.hx
+
+Added countdown after you resume a song PauseSubstate.hx
+
+Flexible stageUI assets and more organized from PlayState.hx
+
+Rewrite of MainMenuState (still a wip)
+
+Small Tweaks from PlayState.hx

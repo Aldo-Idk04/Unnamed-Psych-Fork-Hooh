@@ -162,9 +162,7 @@ class Main extends Sprite
 		addChild(fpsVar);
 		Lib.current.stage.align = "tl";
 		Lib.current.stage.scaleMode = StageScaleMode.NO_SCALE;
-		if(fpsVar != null) {
-			fpsVar.visible = ClientPrefs.data.showFPS;
-		}
+		if(fpsVar != null) fpsVar.visible = ClientPrefs.data.showFPS;
 		#end
 
 		#if (linux || mac) // fix the app icon not showing up on the Linux Panel / Mac Dock

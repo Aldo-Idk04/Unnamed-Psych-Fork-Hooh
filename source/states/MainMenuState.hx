@@ -37,7 +37,6 @@ class MainMenuState extends MusicBeatState
 	var leftOption:String = #if ACHIEVEMENTS_ALLOWED 'achievements' #else null #end;
 	var rightOption:String = 'options';
 
-	var magenta:FlxSprite;
 	var camFollow:FlxObject;
 
 	static var showOutdatedWarning:Bool = true;
@@ -45,7 +44,7 @@ class MainMenuState extends MusicBeatState
 	{
 		super.create();
 
-		var bpmPath:String = 'assets/shared/images/gfDanceTitle';
+		var bpmPath:String = 'assets/shared/images/menus/title/gfDanceTitle';
 
 		#if MODS_ALLOWED
 		Mods.pushGlobalMods();
@@ -53,7 +52,7 @@ class MainMenuState extends MusicBeatState
 		var list:Array<String> = Mods.parseList().enabled;
 
 		if (list != null && list[0] != null) {
-			bpmPath = Paths.mods(list[0] + '/images/gfDanceTitle');
+			bpmPath = Paths.mods(list[0] + '/images/menus/title/gfDanceTitle');
 		}
 		#end
 
@@ -89,26 +88,19 @@ class MainMenuState extends MusicBeatState
 		persistentUpdate = persistentDraw = true;
 
 		var yScroll:Float = 0.25;
-		bg = new FlxSprite(-80).loadGraphic(Paths.image('menuBG'));
+		bg = new FlxSprite(-80).loadGraphic(Paths.image('menus/menuBG'));
 		bg.antialiasing = ClientPrefs.data.antialiasing;
 		bg.scrollFactor.set(0, yScroll);
-		bg.setGraphicSize(Std.int(bg.width * 1.175));
+		bg.setGraphicSize(FlxG.width , FlxG.height);
 		bg.updateHitbox();
 		bg.screenCenter();
+		//bg.graphic.bitmap.getSurface();
+		//bg.graphic.bitmap.disposeImage();
 		add(bg);
 
 		camFollow = new FlxObject(0, 0, 1, 1);
 		add(camFollow);
 
-		magenta = new FlxSprite(-80).loadGraphic(Paths.image('menuDesat'));
-		magenta.antialiasing = ClientPrefs.data.antialiasing;
-		magenta.scrollFactor.set(0, yScroll);
-		magenta.setGraphicSize(Std.int(magenta.width * 1.175));
-		magenta.updateHitbox();
-		magenta.screenCenter();
-		magenta.visible = false;
-		magenta.color = 0xFFfd719b;
-		add(magenta);
 
 		menuItems = new FlxTypedGroup<FlxSprite>();
 		add(menuItems);
@@ -163,12 +155,13 @@ class MainMenuState extends MusicBeatState
 	function createMenuItem(name:String, x:Float, y:Float):FlxSprite
 	{
 		var menuItem:FlxSprite = new FlxSprite(x, y);
-		menuItem.frames = Paths.getSparrowAtlas('mainmenu/menu_$name');
+		menuItem.frames = Paths.getSparrowAtlas('menus/main/menu_$name');
 		menuItem.animation.addByPrefix('idle', '$name idle', 24, true);
 		menuItem.animation.addByPrefix('selected', '$name selected', 24, true);
 		menuItem.animation.play('idle');
 		menuItem.updateHitbox();
-		
+		//menuItem.graphic.bitmap.getSurface();
+		//menuItem.graphic.bitmap.disposeImage();
 		menuItem.antialiasing = ClientPrefs.data.antialiasing;
 		menuItem.scrollFactor.set();
 		menuItems.add(menuItem);
@@ -307,9 +300,6 @@ class MainMenuState extends MusicBeatState
 				FlxG.sound.play(Paths.sound('confirmMenu'));
 				selectedSomethin = true;
 				FlxG.mouse.visible = false;
-
-				if (ClientPrefs.data.flashing)
-					FlxFlicker.flicker(magenta, 1.1, 0.15, false);
 
 				var item:FlxSprite;
 				var option:String;

@@ -151,8 +151,15 @@ class Character extends FlxSprite
 		originalCameraPositions = json.camera_position;
 		isAnimateAtlas = false;
 
+	    imageFile = json.image;
+
+		var cleanImagePath:String = json.image;
+		if(cleanImagePath.startsWith('characters/')) {
+			cleanImagePath = cleanImagePath.substring(11);
+		}
+
 		#if flxanimate
-		var animToFind:String = Paths.getPath('images/' + json.image + '/Animation.json', TEXT);
+		var animToFind:String = Paths.getPath('images/characters/' + cleanImagePath + '/Animation.json', TEXT);
 		if (#if MODS_ALLOWED FileSystem.exists(animToFind) || #end Assets.exists(animToFind))
 			isAnimateAtlas = true;
 		#end
@@ -162,7 +169,16 @@ class Character extends FlxSprite
 
 		if(!isAnimateAtlas)
 		{
-			frames = Paths.getMultiAtlas(json.image.split(','));
+			if(cleanImagePath.contains(',')) {
+				var imageArray = cleanImagePath.split(',');
+				for(i in 0...imageArray.length) {
+					imageArray[i] = 'characters/' + imageArray[i];
+				}
+				frames = Paths.getMultiAtlas(imageArray);
+			} else {
+				frames = Paths.getSparrowAtlas('characters/' + cleanImagePath);
+			}
+			//frames = Paths.getMultiAtlas(json.image.split(','));
 		}
 		#if flxanimate
 		else
@@ -171,19 +187,21 @@ class Character extends FlxSprite
 			atlas.showPivot = false;
 			try
 			{
-				Paths.loadAnimateAtlas(atlas, json.image);
+				Paths.loadAnimateAtlas(atlas, 'characters/' + cleanImagePath);
 			}
 			catch(e:haxe.Exception)
 			{
-				FlxG.log.warn('Could not load atlas ${json.image}: $e');
+				FlxG.log.warn('Could not load atlas characters/${cleanImagePath}: $e');
 				trace(e.stack);
 			}
 		}
 		#end
 
-		imageFile = json.image;
+		//imageFile = json.image;
+		//imageFile = imagePath;
 		jsonScale = json.scale;
-		if(json.scale != 1) {
+		if(json.scale != 1) 
+		{
 			scale.set(jsonScale, jsonScale);
 			updateHitbox();
 		}
@@ -352,9 +370,10 @@ class Character extends FlxSprite
 
 			midPointX = frameWidth - width;
 
-			if (!CheckFlipX() && Conductor.songPosition > 0)
+			var flipped = CheckFlipX();
+
+			if (!CheckFlipX() && !flipped)
 			{
-				trace('Reverting changes on $curCharacter');
 				if (anim.indices != null && anim.indices.length > 0)
 					animation.addByIndices(animName, animPrefix, anim.indices, "", anim.fps, animLoop);
 				else
@@ -437,6 +456,39 @@ class Character extends FlxSprite
 		}
 	}
 
+	public function updateScale():Void
+	{
+		if (scale.x != jsonScale && scale.y != jsonScale) scaleOffsets(scale.x, scale.y); 
+	}
+
+	public function scaleOffsets(x:Float, y:Float):Void
+	{
+		for (anim in animationsArray)
+		{
+			var offset:Array<Dynamic> = anim.offsets;
+			if (offset != null && offset.length == 2)
+			{
+				offset[0] *= x;
+				offset[1] *= y;
+			}
+			addOffset(anim.name, offset[0], offset[1]);
+		}
+	}
+
+	public function invertYOffsets():Void
+	{
+		if (!flipY) return;
+		for (anim in animationsArray)
+		{
+			var offset:Array<Dynamic> = anim.offsets;
+			if (offset != null && offset.length == 2)
+			{
+				offset[1] *= -1;
+			}
+			addOffset(anim.name, offset[0], offset[1] + (frameHeight - height));
+		}
+	}
+
 	public function isAnimationFinished():Bool
 	{
 		if(isAnimationNull()) return false;
@@ -477,9 +529,9 @@ class Character extends FlxSprite
 
 	public var danced:Bool = false;
 
-	/**
-	 * FOR GF DANCING SHIT
-	 */
+	/*
+	 * FOR GF DANCING SHIT *
+	*/
 	public function dance()
 	{
 		if (!debugMode && !skipDance && !specialAnim)
@@ -487,11 +539,11 @@ class Character extends FlxSprite
 			if(danceIdle)
 			{
 				danced = !danced;
-
-				if (danced)
+				playAnim('dance' + (danced ? 'Right' : 'Left') + idleSuffix);
+				/*if (danced)
 					playAnim('danceRight' + idleSuffix);
 				else
-					playAnim('danceLeft' + idleSuffix);
+					playAnim('danceLeft' + idleSuffix);*/
 			}
 			else if(hasAnimation('idle' + idleSuffix))
 				playAnim('idle' + idleSuffix);

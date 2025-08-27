@@ -69,15 +69,15 @@ class NoteSplash extends FlxSprite
 			if (PlayState.SONG != null && PlayState.SONG.splashSkin != null && PlayState.SONG.splashSkin.length > 0) splash = PlayState.SONG.splashSkin;
 		}
 
-		texture = splash;
+		texture = PlayState.stageUI + 'UI/' + splash;
 		frames = Paths.getSparrowAtlas(texture);
 		if (frames == null)
 		{
-			texture = defaultNoteSplash + getSplashSkinPostfix();
+			texture = PlayState.stageUI + 'UI/' + defaultNoteSplash + getSplashSkinPostfix();
 			frames = Paths.getSparrowAtlas(texture);
 			if (frames == null)
 			{
-				texture = defaultNoteSplash;
+				texture = 'normalUI/' + defaultNoteSplash;
 				frames = Paths.getSparrowAtlas(texture);
 			}
 		}

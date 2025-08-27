@@ -1,0 +1,49 @@
+{
+	"songs": [
+		[
+			"Not-Above-Death",
+			"",
+			[
+				255,
+				255,
+				255
+			]
+		],
+		[
+			"Natural-Skelection",
+			"",
+			[
+				255,
+				255,
+				255
+			]
+		],
+		[
+			"Something-New",
+			"",
+			[
+				255,
+				255,
+				255
+			]
+		]
+	],
+	"hideFreeplay": false,
+	"weekBackground": "",
+	"difficulties": "Hard",
+	"weekCharacters": [
+		"",
+		"",
+		""
+	],
+	"storyName": "",
+	"weekName": "Remix Songs",
+	"freeplayColor": [
+		146,
+		113,
+		253
+	],
+	"hideStoryMode": true,
+	"weekBefore": "tutorial",
+	"startUnlocked": true
+}
